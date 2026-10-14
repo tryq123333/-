@@ -102,13 +102,6 @@ jobs:
           path: LuokeAutoPiano.zip
           if-no-files-found: error
 
-      - name: Upload optimized source archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: LuokeAutoPiano-source-zip
-          path: LuokeAutoPiano.zip
-          if-no-files-found: error
-
       - name: Sync optimized source archive back to repository
         run: |
           git config user.name "github-actions[bot]"
