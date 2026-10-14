@@ -1,0 +1,311 @@
+
+diff -ruN patchold/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java patchnew/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+--- patchold/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java	2026-10-14 18:23:12.968086299 +0000
++++ patchnew/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java	2026-10-14 18:23:12.967619423 +0000
+@@ -19,6 +19,7 @@
+ import android.widget.Button;
+ import android.widget.FrameLayout;
+ import android.widget.LinearLayout;
++import android.widget.SeekBar;
+ import android.widget.TextView;
+ import android.widget.Toast;
+ 
+@@ -40,6 +41,9 @@
+     private SharedPreferences prefs;
+     private View controlOverlay;
+     private View calibrationOverlay;
++    private View segmentOverlay;
++    private NoteRollView noteRollView;
++    private WindowManager.LayoutParams noteRollParams;
+     private TextView pauseButton;
+     private WindowManager.LayoutParams controlParams;
+ 
+@@ -51,6 +55,14 @@
+     private long playbackStartMs;
+     private long pausedDurationMs;
+     private long pauseStartedMs;
++    private volatile long playbackPositionMicros;
++    private volatile long playbackRangeStartMicros;
++    private volatile long playbackRangeEndMicros;
++    private volatile int activeSpeedPercent = 100;
++    private volatile boolean playbackActive;
++    private volatile MidiParser.MidiSong currentSong;
++    private static final String KEY_RANGE_START_MS = "practice_start_ms";
++    private static final String KEY_RANGE_END_MS = "practice_end_ms";
+     private static final int TAP_DURATION_MS = 38;
+     private static final long CHORD_WINDOW_MICROS = 3_000L;
+ 
+@@ -73,8 +85,12 @@
+         stopPlayback();
+         removeOverlay(calibrationOverlay);
+         removeOverlay(controlOverlay);
++        removeOverlay(segmentOverlay);
++        removeOverlay(noteRollView);
+         calibrationOverlay = null;
+         controlOverlay = null;
++        segmentOverlay = null;
++        noteRollView = null;
+         if (instance == this) instance = null;
+         super.onDestroy();
+     }
+@@ -121,16 +137,22 @@
+         pauseButton.setPadding(dp(10), dp(7), dp(10), dp(7));
+         pauseButton.setBackground(rounded(0xff4b6279, dp(8)));
+         Button stop = smallButton("停止");
++        Button segment = smallButton("片段");
++        Button roll = smallButton("谱面");
+         Button calibrate = smallButton("校准");
+         Button hide = smallButton("收起");
+         panel.addView(play, buttonParams());
+         panel.addView(pauseButton, buttonParams());
+         panel.addView(stop, buttonParams());
++        panel.addView(segment, buttonParams());
++        panel.addView(roll, buttonParams());
+         panel.addView(calibrate, buttonParams());
+         panel.addView(hide, buttonParams());
+         play.setOnClickListener(v -> startPlayback());
+         pauseButton.setOnClickListener(v -> togglePause());
+         stop.setOnClickListener(v -> stopPlayback());
++        segment.setOnClickListener(v -> showSegmentDialog());
++        roll.setOnClickListener(v -> toggleNoteRoll());
+         calibrate.setOnClickListener(v -> beginCalibration());
+         hide.setOnClickListener(v -> collapseControlPanel());
+ 
+@@ -250,6 +272,289 @@
+         pauseButton = null;
+     }
+ 
++    private void toggleNoteRoll() {
++        if (Looper.myLooper() != Looper.getMainLooper()) {
++            mainHandler.post(this::toggleNoteRoll);
++            return;
++        }
++        if (noteRollView != null) {
++            removeOverlay(noteRollView);
++            noteRollView = null;
++            prefs.edit().putBoolean("note_roll_enabled", false).apply();
++            toast("音符谱面已隐藏。再次点“谱面”可显示。 ");
++        } else {
++            prefs.edit().putBoolean("note_roll_enabled", true).apply();
++            showNoteRoll();
++        }
++    }
++
++    private MidiParser.MidiSong readCurrentSong() {
++        String path = prefs.getString(MainActivity.KEY_SONG_PATH, "");
++        if (path == null || path.isEmpty() || !new File(path).isFile()) return null;
++        try { return MidiParser.parse(new File(path)); }
++        catch (Exception ex) { toast("谱面载入失败：" + ex.getMessage()); return null; }
++    }
++
++    private void showNoteRoll() {
++        if (Looper.myLooper() != Looper.getMainLooper()) {
++            mainHandler.post(this::showNoteRoll);
++            return;
++        }
++        if (windowManager == null) return;
++        MidiParser.MidiSong song = readCurrentSong();
++        if (song == null) {
++            toast("请先在主界面导入 MIDI 曲谱，再显示音符谱面。");
++            return;
++        }
++        currentSong = song;
++        if (noteRollView == null) {
++            noteRollView = new NoteRollView(this);
++            noteRollParams = new WindowManager.LayoutParams(
++                    WindowManager.LayoutParams.MATCH_PARENT, dp(116),
++                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
++                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
++                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
++                    PixelFormat.TRANSLUCENT);
++            noteRollParams.gravity = Gravity.TOP | Gravity.LEFT;
++            noteRollParams.x = 0;
++            noteRollParams.y = dp(3);
++            try { windowManager.addView(noteRollView, noteRollParams); }
++            catch (Exception e) {
++                noteRollView = null;
++                noteRollParams = null;
++                toast("音符谱面无法显示，请重新开启无障碍服务后重试。");
++                return;
++            }
++        }
++        refreshNoteRollData();
++    }
++
++    private void refreshNoteRollData() {
++        if (noteRollView == null) return;
++        if (currentSong == null) currentSong = readCurrentSong();
++        if (currentSong == null) return;
++        long duration = currentSong.durationMicros;
++        long startMs = Math.max(0L, prefs.getLong(KEY_RANGE_START_MS, 0L));
++        long savedEnd = prefs.getLong(KEY_RANGE_END_MS, -1L);
++        long endMs = savedEnd > 0 ? Math.min(savedEnd, Math.max(1L, duration / 1000L)) : Math.max(1L, duration / 1000L);
++        startMs = Math.min(startMs, endMs - 1L);
++        noteRollView.setSong(currentSong, startMs * 1000L, endMs * 1000L,
++                activeSpeedPercent, playbackPositionMicros, playbackActive);
++        noteRollView.invalidate();
++    }
++
++    private void showSegmentDialog() {
++        if (Looper.myLooper() != Looper.getMainLooper()) {
++            mainHandler.post(this::showSegmentDialog);
++            return;
++        }
++        if (windowManager == null) return;
++        MidiParser.MidiSong song = readCurrentSong();
++        if (song == null) {
++            toast("请先在主界面导入 MIDI 曲谱。");
++            return;
++        }
++        currentSong = song;
++        final long songDurationMs = Math.max(1L, song.durationMicros / 1000L);
++        long savedStart = Math.max(0L, prefs.getLong(KEY_RANGE_START_MS, 0L));
++        long savedEnd = prefs.getLong(KEY_RANGE_END_MS, songDurationMs);
++        savedStart = Math.min(savedStart, songDurationMs - 1);
++        savedEnd = Math.max(savedStart + 1, Math.min(savedEnd, songDurationMs));
++        final long[] startMs = {savedStart};
++        final long[] endMs = {savedEnd};
++        final int[] speed = {prefs.getInt("playback_speed_percent", 100)};
++
++        FrameLayout root = new FrameLayout(this);
++        root.setBackgroundColor(0xc8202938);
++        int screenWidth = getResources().getDisplayMetrics().widthPixels;
++        int panelWidth = Math.min(dp(520), screenWidth - dp(28));
++        LinearLayout card = new LinearLayout(this);
++        card.setOrientation(LinearLayout.VERTICAL);
++        card.setPadding(dp(20), dp(18), dp(20), dp(18));
++        card.setBackground(rounded(0xff182433, dp(16)));
++        TextView title = new TextView(this);
++        title.setText("选择练习片段");
++        title.setTextColor(Color.WHITE);
++        title.setTextSize(19);
++        title.setTypeface(null, Typeface.BOLD);
++        card.addView(title, new LinearLayout.LayoutParams(-1, -2));
++        TextView subtitle = new TextView(this);
++        subtitle.setText(song.title + " · " + formatTime(songDurationMs));
++        subtitle.setTextColor(0xffb8c9d9);
++        subtitle.setTextSize(12);
++        subtitle.setPadding(0, dp(5), 0, dp(14));
++        card.addView(subtitle);
++
++        TextView rangeText = new TextView(this);
++        rangeText.setTextColor(0xffe8eff7);
++        rangeText.setTextSize(13);
++        card.addView(rangeText);
++        SeekBar start = new SeekBar(this);
++        start.setMax((int) Math.min(Integer.MAX_VALUE, songDurationMs));
++        start.setProgress((int) startMs[0]);
++        card.addView(start, seekParams());
++        TextView endLabel = new TextView(this);
++        endLabel.setTextColor(0xffe8eff7);
++        endLabel.setTextSize(13);
++        card.addView(endLabel);
++        SeekBar end = new SeekBar(this);
++        end.setMax((int) Math.min(Integer.MAX_VALUE, songDurationMs));
++        end.setProgress((int) endMs[0]);
++        card.addView(end, seekParams());
++        Runnable updateLabels = () -> {
++            if (startMs[0] >= endMs[0]) startMs[0] = Math.max(0L, endMs[0] - 1);
++            if (endMs[0] <= startMs[0]) endMs[0] = Math.min(songDurationMs, startMs[0] + 1);
++            rangeText.setText("开始位置  " + formatTime(startMs[0]) + " / " + formatTime(songDurationMs));
++            endLabel.setText("结束位置  " + formatTime(endMs[0]) + " / " + formatTime(songDurationMs));
++            start.setProgress((int) startMs[0]);
++            end.setProgress((int) endMs[0]);
++        };
++        start.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
++            public void onProgressChanged(SeekBar seekBar, int value, boolean fromUser) {
++                startMs[0] = Math.min(value, endMs[0] - 1);
++                updateLabels.run();
++            }
++            public void onStartTrackingTouch(SeekBar seekBar) {}
++            public void onStopTrackingTouch(SeekBar seekBar) {}
++        });
++        end.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
++            public void onProgressChanged(SeekBar seekBar, int value, boolean fromUser) {
++                endMs[0] = Math.max(startMs[0] + 1, value);
++                updateLabels.run();
++            }
++            public void onStartTrackingTouch(SeekBar seekBar) {}
++            public void onStopTrackingTouch(SeekBar seekBar) {}
++        });
++        updateLabels.run();
++
++        TextView speedLabel = new TextView(this);
++        speedLabel.setTextColor(0xffe8eff7);
++        speedLabel.setTextSize(13);
++        speedLabel.setPadding(0, dp(12), 0, dp(2));
++        card.addView(speedLabel);
++        SeekBar speedBar = new SeekBar(this);
++        speedBar.setMax(150);
++        speedBar.setProgress(Math.max(0, Math.min(150, speed[0] - 50)));
++        card.addView(speedBar, seekParams());
++        speedBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
++            public void onProgressChanged(SeekBar seekBar, int value, boolean fromUser) {
++                speed[0] = value + 50;
++                speedLabel.setText("播放速度  " + (speed[0] / 100.0f) + "×");
++            }
++            public void onStartTrackingTouch(SeekBar seekBar) {}
++            public void onStopTrackingTouch(SeekBar seekBar) {}
++        });
++        speedLabel.setText("播放速度  " + (speed[0] / 100.0f) + "×");
++
++        LinearLayout actions = new LinearLayout(this);
++        actions.setGravity(Gravity.END);
++        actions.setOrientation(LinearLayout.HORIZONTAL);
++        Button preview = smallButton("试听片段");
++        Button full = smallButton("全曲");
++        Button confirm = smallButton("确定");
++        LinearLayout.LayoutParams actionParams = new LinearLayout.LayoutParams(0, dp(42), 1);
++        actionParams.setMargins(dp(3), dp(14), dp(3), 0);
++        actions.addView(preview, actionParams);
++        actions.addView(full, actionParams);
++        actions.addView(confirm, actionParams);
++        card.addView(actions, new LinearLayout.LayoutParams(-1, -2));
++        FrameLayout.LayoutParams cardParams = new FrameLayout.LayoutParams(panelWidth, -2, Gravity.CENTER);
++        root.addView(card, cardParams);
++
++        segmentOverlay = root;
++        FrameLayout.LayoutParams rootParams = new FrameLayout.LayoutParams(-1, -1);
++        root.setLayoutParams(rootParams);
++        WindowManager.LayoutParams overlayParams = new WindowManager.LayoutParams(
++                WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,
++                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
++                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
++                PixelFormat.TRANSLUCENT);
++        overlayParams.gravity = Gravity.TOP | Gravity.LEFT;
++        // Accessibility overlays already receive gestures from the service. Keep window non-focusable.
++        try { windowManager.addView(root, overlayParams); }
++        catch (Exception e) { segmentOverlay = null; toast("练习片段面板打开失败。"); return; }
++
++        Runnable saveAndClose = () -> {
++            prefs.edit().putLong(KEY_RANGE_START_MS, startMs[0]).putLong(KEY_RANGE_END_MS, endMs[0])
++                    .putInt("playback_speed_percent", speed[0]).apply();
++            activeSpeedPercent = speed[0];
++            removeOverlay(segmentOverlay);
++            segmentOverlay = null;
++            refreshNoteRollData();
++        };
++        preview.setOnClickListener(v -> {
++            saveAndClose.run();
++            startPlayback();
++        });
++        full.setOnClickListener(v -> {
++            startMs[0] = 0; endMs[0] = songDurationMs; updateLabels.run();
++            saveAndClose.run();
++            startPlayback();
++        });
++        confirm.setOnClickListener(v -> saveAndClose.run());
++    }
++
++    private LinearLayout.LayoutParams seekParams() {
++        LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-1, dp(34));
++        p.setMargins(0, dp(2), 0, dp(8));
++        return p;
++    }
++
++    private String formatTime(long ms) {
++        return String.format(java.util.Locale.US, "%02d:%02d.%1d", ms / 60000,
++                (ms / 1000) % 60, (ms % 1000) / 100);
++    }
++
++
