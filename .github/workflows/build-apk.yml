@@ -387,7 +387,7 @@ jobs:
               if "drawHeaderOverlay(Canvas canvas" not in note or "0x66ffffff" not in note or 'rangeEditing ? "完成" : "片段"' not in note:
                   raise SystemExit("Current note-roll header lacks expected v3 controls.")
               note = note.replace(
-                  "/** Compact, resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 */",
+                  "/** Compact resizable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 */",
                   "/** Compact resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 NOTE_HEADER_INFO_V2 */")
               note_path.write_text(note, encoding="utf-8")
 
