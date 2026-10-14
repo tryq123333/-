@@ -47,6 +47,12 @@ jobs:
           grep -q 'private boolean scrubbing;' "$NOTE_VIEW" || sed -i '/private boolean playing;/a\    private boolean scrubbing;' "$NOTE_VIEW"
           grep -q 'private boolean scrubbing;' "$NOTE_VIEW"
 
+      - name: Set compact default note-roll width
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          sed -i 's/screenWidth \* \.48f/screenWidth * .38f/' "$SERVICE"
+          grep -q 'screenWidth \* \.38f' "$SERVICE"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
