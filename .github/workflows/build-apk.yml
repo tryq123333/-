@@ -324,69 +324,59 @@ jobs:
 
                   if (scrubbing) {''',
                   "restore subtle playhead")
-              note = rep(
-                  note,
-                  '''    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {
-                  // Song title/time now live in the collapsed player status pill, not over the note blocks.
-                  float buttonTop = 5 * density;
-                  float buttonBottom = Math.min(25 * density, h - 4 * density);
-                  drawHeaderChip(canvas, new RectF(w - 89 * density, buttonTop, w - 64 * density, buttonBottom),
-                          playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);
-                  drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),
-                          rangeEditing ? "选" : "段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);
-                  drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),
-                          "×", 0xff455667, density);
-                  }''',
-                  '''    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {
-                      // Header text shares the blank transparent background with the note field.
-                      float left = 8 * density;
-                      float titleMaxWidth = Math.max(12 * density, w - 65 * density);
-                      paint.setStyle(Paint.Style.FILL);
-                      paint.setFakeBoldText(true);
-                      paint.setTextSize(9.5f * density);
-                      paint.setColor(0xfff2f5f4);
-                      CharSequence visibleTitle = android.text.TextUtils.ellipsize(
-                              title, new android.text.TextPaint(paint), titleMaxWidth,
-                              android.text.TextUtils.TruncateAt.END);
-                      canvas.drawText(visibleTitle.toString(), left, 14 * density, paint);
-                      paint.setFakeBoldText(false);
-                      paint.setTextSize(8.2f * density);
-                      paint.setColor(0xccebf0f0);
-                      String time = formatTime(positionMicros) + " / " + formatTime(durationMicros);
-                      CharSequence visibleTime = android.text.TextUtils.ellipsize(
-                              time, new android.text.TextPaint(paint), titleMaxWidth,
-                              android.text.TextUtils.TruncateAt.END);
-                      canvas.drawText(visibleTime.toString(), left, 27 * density, paint);
-
-                      float buttonTop = 5 * density;
-                      float buttonBottom = Math.min(25 * density, h - 4 * density);
-                      drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),
-                              playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);
-                      drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),
-                              "×", 0xff455667, density);
-                      // Keep segment selection below the metadata, far from the close target.
-                      drawHeaderChip(canvas, new RectF(left, 32 * density, left + 39 * density, 49 * density),
-                              rangeEditing ? "完成" : "片段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);
-                  }''',
-                  "move song metadata into transparent note-roll header")
-              note = rep(
-                  note,
-                  '''                if (y < 34 * density && x > w - 34 * density) {
-                              touchMode = TOUCH_CLOSE;
-                          } else if (y < 34 * density && x > w - 63 * density) {
-                              touchMode = TOUCH_SEGMENT;
-                          } else if (y < 34 * density && x > w - 91 * density) {
-                              touchMode = TOUCH_PLAY_PAUSE;
-                          } else if (touchEdges != 0) {''',
-                  '''                if (y < 29 * density && x > w - 34 * density) {
-                      touchMode = TOUCH_CLOSE;
-                  } else if (y < 29 * density && x > w - 63 * density) {
-                      touchMode = TOUCH_PLAY_PAUSE;
-                  } else if (y >= 30 * density && y < 51 * density
-                          && x >= 5 * density && x <= 52 * density) {
-                      touchMode = TOUCH_SEGMENT;
-                  } else if (touchEdges != 0) {''',
-                  "move segment touch target below title/time")
+              header_start = note.find("    private void drawHeaderOverlay(")
+              header_end = note.find("    private void drawHeaderChip(", header_start)
+              if header_start < 0 or header_end < 0:
+                  raise SystemExit("Cannot find note header boundaries.")
+              new_header = "\n".join([
+                  '    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {',
+                  '        // Header text shares the blank transparent background with the notes.',
+                  '        float left = 8 * density;',
+                  '        float titleMaxWidth = Math.max(12 * density, w - 65 * density);',
+                  '        paint.setStyle(Paint.Style.FILL);',
+                  '        paint.setFakeBoldText(true);',
+                  '        paint.setTextSize(9.5f * density);',
+                  '        paint.setColor(0xfff2f5f4);',
+                  '        CharSequence visibleTitle = android.text.TextUtils.ellipsize(',
+                  '                title, new android.text.TextPaint(paint), titleMaxWidth,',
+                  '                android.text.TextUtils.TruncateAt.END);',
+                  '        canvas.drawText(visibleTitle.toString(), left, 14 * density, paint);',
+                  '        paint.setFakeBoldText(false);',
+                  '        paint.setTextSize(8.2f * density);',
+                  '        paint.setColor(0xccebf0f0);',
+                  '        String time = formatTime(positionMicros) + " / " + formatTime(durationMicros);',
+                  '        CharSequence visibleTime = android.text.TextUtils.ellipsize(',
+                  '                time, new android.text.TextPaint(paint), titleMaxWidth,',
+                  '                android.text.TextUtils.TruncateAt.END);',
+                  '        canvas.drawText(visibleTime.toString(), left, 27 * density, paint);',
+                  '',
+                  '        float buttonTop = 5 * density;',
+                  '        float buttonBottom = Math.min(25 * density, h - 4 * density);',
+                  '        drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),',
+                  '                playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);',
+                  '        drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),',
+                  '                "×", 0xff455667, density);',
+                  '        // Keep segment selection below the metadata, far from the close target.',
+                  '        drawHeaderChip(canvas, new RectF(left, 32 * density, left + 39 * density, 49 * density),',
+                  '                rangeEditing ? "完成" : "片段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);',
+                  '    }',
+                  ''
+              ]) + "\n"
+              note = note[:header_start] + new_header + note[header_end:]
+              touch_start = note.find("                if (y < 34 * density && x > w - 34 * density) {")
+              touch_end = note.find("                } else if (touchEdges != 0) {", touch_start)
+              if touch_start < 0 or touch_end < 0:
+                  raise SystemExit("Cannot find note-roll header touch boundaries.")
+              new_touch = "\n".join([
+                  '                if (y < 29 * density && x > w - 34 * density) {',
+                  '                    touchMode = TOUCH_CLOSE;',
+                  '                } else if (y < 29 * density && x > w - 63 * density) {',
+                  '                    touchMode = TOUCH_PLAY_PAUSE;',
+                  '                } else if (y >= 30 * density && y < 51 * density',
+                  '                        && x >= 5 * density && x <= 52 * density) {',
+                  '                    touchMode = TOUCH_SEGMENT;'
+              ]) + "\n"
+              note = note[:touch_start] + new_touch + note[touch_end:]
               note = note.replace(
                   "/** Compact, resizable and seekable MIDI roll overlay. */",
                   "/** Compact, resizable and seekable MIDI roll overlay. NOTE_HEADER_INFO_V2 */")
