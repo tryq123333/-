@@ -393,6 +393,24 @@ jobs:
           print("Applied top-left overlay, calibration-only controls, transparent note metadata, subtle playhead and second-row segment button.")
           PY
 
+      - name: Polish icon-anchored panel and inline note-roll header
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'ICON_ANCHORED_HEADER_V3' "$NOTE_VIEW"; then
+            cat .github/patches/overlay-polish-v3.part-*.txt | tr -d '\r\n\t ' > /tmp/overlay-polish-v3.patch.gz.b64
+            base64 --decode /tmp/overlay-polish-v3.patch.gz.b64 > /tmp/overlay-polish-v3.patch.gz
+            gzip -t /tmp/overlay-polish-v3.patch.gz
+            gzip -dc /tmp/overlay-polish-v3.patch.gz > /tmp/overlay-polish-v3.patch
+            patch --dry-run -p1 < /tmp/overlay-polish-v3.patch
+            patch -p1 < /tmp/overlay-polish-v3.patch
+          else
+            echo "Icon-anchored panel and inline note header are already applied."
+          fi
+          grep -q 'dragTitle.setText("♫")' "$SERVICE"
+          ! grep -q 'Button hide = smallButton("收起")' "$SERVICE"
+          grep -q 'ICON_ANCHORED_HEADER_V3' "$NOTE_VIEW"
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
