@@ -18,16 +18,27 @@ jobs:
       - name: Expand Android source archive
         run: unzip -q LuokeAutoPiano.zip
 
-      - name: Apply video-inspired MIDI roll and practice-range changes
+      - name: Apply earlier video-inspired MIDI roll changes when needed
         run: |
           if [ ! -f LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java ]; then
-            cat video-patch-b64/part-*.txt > /tmp/video-optimization.patch.gz.b64
-            base64 --decode /tmp/video-optimization.patch.gz.b64 | gzip -dc > /tmp/video-optimization.patch
-            patch --dry-run -p1 -d LuokeAutoPiano < /tmp/video-optimization.patch
-            patch -p1 -d LuokeAutoPiano < /tmp/video-optimization.patch
+            cat video-patch-b64/part-*.txt | tr -d '\r\n\t ' > /tmp/video-optimization.patch.gz.b64
+            base64 --decode /tmp/video-optimization.patch.gz.b64 > /tmp/video-optimization.patch.gz
+            gzip -t /tmp/video-optimization.patch.gz
+            gzip -dc /tmp/video-optimization.patch.gz > /tmp/video-optimization.patch
+            patch --dry-run -p1 < /tmp/video-optimization.patch
+            patch -p1 < /tmp/video-optimization.patch
           else
             echo "The source archive already contains the video-inspired optimization."
           fi
+
+      - name: Apply resizable, seekable roll and song-list updates
+        run: |
+          cat overlay-patch-b64/part-*.txt | tr -d '\r\n\t ' > /tmp/overlay-optimization.patch.gz.b64
+          base64 --decode /tmp/overlay-optimization.patch.gz.b64 > /tmp/overlay-optimization.patch.gz
+          gzip -t /tmp/overlay-optimization.patch.gz
+          gzip -dc /tmp/overlay-optimization.patch.gz > /tmp/overlay-optimization.patch
+          patch --dry-run -p1 < /tmp/overlay-optimization.patch
+          patch -p1 < /tmp/overlay-optimization.patch
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -75,10 +86,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git rm -r --ignore-unmatch video-patch video-patch-b64
+          git rm -r --ignore-unmatch video-patch video-patch-b64 overlay-patch-b64
           git add LuokeAutoPiano.zip
           if ! git diff --cached --quiet; then
-            git commit -m "Sync video-optimized Android source [skip ci]"
+            git commit -m "Sync seekable music overlay source [skip ci]"
             git push origin HEAD:main
           else
             echo "No source archive changes to sync."
