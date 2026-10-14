@@ -1,0 +1,9 @@
+--- LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
++++ LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+@@ -47,6 +47,7 @@
+     private TextView miniPlaybackButton;
+     private LinearLayout collapsedBubble;
++    private TextView collapsedMusicIcon;
+     private TextView collapsedStatusTitle;
+     private TextView collapsedStatusTime;
+     private TextView collapsedExpandButton;
