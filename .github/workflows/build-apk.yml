@@ -65,11 +65,9 @@ jobs:
 
       - name: Package optimized source archive
         run: |
+          find LuokeAutoPiano -type d \( -name build -o -name .gradle \) -prune -exec rm -rf {} +
           rm -f /tmp/LuokeAutoPiano.zip
-          zip -qr -9 /tmp/LuokeAutoPiano.zip LuokeAutoPiano \
-            -x 'LuokeAutoPiano/app/build/*' \
-               'LuokeAutoPiano/.gradle/*' \
-               'LuokeAutoPiano/**/build/*'
+          zip -qr -9 /tmp/LuokeAutoPiano.zip LuokeAutoPiano
           unzip -tq /tmp/LuokeAutoPiano.zip
           cp /tmp/LuokeAutoPiano.zip LuokeAutoPiano.zip
 
