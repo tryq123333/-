@@ -47,11 +47,20 @@ jobs:
           grep -q 'private boolean scrubbing;' "$NOTE_VIEW" || sed -i '/private boolean playing;/a\    private boolean scrubbing;' "$NOTE_VIEW"
           grep -q 'private boolean scrubbing;' "$NOTE_VIEW"
 
-      - name: Set compact default note-roll width
+      - name: Keep the note-roll default compact
         run: |
           SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
-          sed -i 's/screenWidth \* \.48f/screenWidth * .38f/' "$SERVICE"
-          grep -q 'screenWidth \* \.38f' "$SERVICE"
+          if grep -q 'screenWidth \\* \\.32f' "$SERVICE"; then
+            echo "Compact note-roll width is already configured."
+          elif grep -q 'screenWidth \\* \\.38f' "$SERVICE"; then
+            sed -i 's/screenWidth \\* \\.38f/screenWidth * .32f/' "$SERVICE"
+          elif grep -q 'screenWidth \\* \\.48f' "$SERVICE"; then
+            sed -i 's/screenWidth \\* \\.48f/screenWidth * .32f/' "$SERVICE"
+          else
+            echo "Could not find the expected note-roll default width expression."
+            exit 1
+          fi
+          grep -q 'screenWidth \\* \\.32f' "$SERVICE"
 
       - name: Apply floating-panel and note-roll refinements when needed
         run: |
