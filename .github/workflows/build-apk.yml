@@ -327,15 +327,15 @@ jobs:
               note = rep(
                   note,
                   '''    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {
-                      // Song title/time now live in the collapsed player status pill, not over the note blocks.
-                      float buttonTop = 5 * density;
-                      float buttonBottom = Math.min(25 * density, h - 4 * density);
-                      drawHeaderChip(canvas, new RectF(w - 89 * density, buttonTop, w - 64 * density, buttonBottom),
-                              playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);
-                      drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),
-                              rangeEditing ? "选" : "段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);
-                      drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),
-                              "×", 0xff455667, density);
+                  // Song title/time now live in the collapsed player status pill, not over the note blocks.
+                  float buttonTop = 5 * density;
+                  float buttonBottom = Math.min(25 * density, h - 4 * density);
+                  drawHeaderChip(canvas, new RectF(w - 89 * density, buttonTop, w - 64 * density, buttonBottom),
+                          playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);
+                  drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),
+                          rangeEditing ? "选" : "段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);
+                  drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),
+                          "×", 0xff455667, density);
                   }''',
                   '''    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {
                       // Header text shares the blank transparent background with the note field.
@@ -372,12 +372,12 @@ jobs:
               note = rep(
                   note,
                   '''                if (y < 34 * density && x > w - 34 * density) {
-                      touchMode = TOUCH_CLOSE;
-                  } else if (y < 34 * density && x > w - 63 * density) {
-                      touchMode = TOUCH_SEGMENT;
-                  } else if (y < 34 * density && x > w - 91 * density) {
-                      touchMode = TOUCH_PLAY_PAUSE;
-                  } else if (touchEdges != 0) {''',
+                              touchMode = TOUCH_CLOSE;
+                          } else if (y < 34 * density && x > w - 63 * density) {
+                              touchMode = TOUCH_SEGMENT;
+                          } else if (y < 34 * density && x > w - 91 * density) {
+                              touchMode = TOUCH_PLAY_PAUSE;
+                          } else if (touchEdges != 0) {''',
                   '''                if (y < 29 * density && x > w - 34 * density) {
                       touchMode = TOUCH_CLOSE;
                   } else if (y < 29 * density && x > w - 63 * density) {
