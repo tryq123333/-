@@ -306,7 +306,7 @@ jobs:
               service_path.write_text(service, encoding="utf-8")
 
           note = note_path.read_text(encoding="utf-8")
-          if "NOTE_HEADER_INFO_V2" not in note:
+          if "NOTE_HEADER_INFO_V2" not in note and "final float top = 8 * density;" in note:
               note = rep(note, "        final float top = 8 * density;", "        final float top = 52 * density;",
                          "move note field below title, time and segment")
               note = rep(
@@ -380,6 +380,15 @@ jobs:
               note = note.replace(
                   "/** Compact, resizable and seekable MIDI roll overlay. */",
                   "/** Compact, resizable and seekable MIDI roll overlay. NOTE_HEADER_INFO_V2 */")
+              note_path.write_text(note, encoding="utf-8")
+          elif "NOTE_HEADER_INFO_V2" not in note:
+              # The current v3 note-roll already has title/time, the faint playhead,
+              # and the segment row. Avoid applying old absolute-layout anchors again.
+              if "drawHeaderOverlay(Canvas canvas" not in note or "0x66ffffff" not in note or 'rangeEditing ? "完成" : "片段"' not in note:
+                  raise SystemExit("Current note-roll header lacks expected v3 controls.")
+              note = note.replace(
+                  "/** Compact resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 */",
+                  "/** Compact resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 NOTE_HEADER_INFO_V2 */")
               note_path.write_text(note, encoding="utf-8")
 
           service = service_path.read_text(encoding="utf-8")
