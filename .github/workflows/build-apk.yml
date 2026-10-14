@@ -154,6 +154,255 @@ jobs:
             echo "Collapsed music icon field is already present."
           fi
 
+      - name: Apply top-left floating overlay, calibration gate, and note header
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          service_path = Path("LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java")
+          note_path = Path("LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java")
+
+          def rep(source, old, new, label):
+              if old not in source:
+                  raise SystemExit("Cannot apply " + label + ": source anchor not found")
+              return source.replace(old, new, 1)
+
+          service = service_path.read_text(encoding="utf-8")
+          if "TOP_LEFT_CALIBRATION_FLOW_V1" not in service:
+              service = rep(
+                  service,
+                  '        prefs = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE);\n        showControlPanel();',
+                  '        prefs = getSharedPreferences(MainActivity.PREFS, MODE_PRIVATE);\n'
+                  '        if (!prefs.getBoolean("overlay_top_left_default_v1", false)) {\n'
+                  '            prefs.edit().putInt("overlay_x", dp(6)).putInt("overlay_y", dp(6))\n'
+                  '                    .putBoolean("overlay_top_left_default_v1", true).apply();\n'
+                  '        }\n'
+                  '        showControlPanel();',
+                  "one-time top-left position migration")
+              service = service.replace(
+                  "controlParams.gravity = Gravity.BOTTOM | Gravity.LEFT;",
+                  "controlParams.gravity = Gravity.TOP | Gravity.LEFT;")
+              service = rep(
+                  service,
+                  '        controlParams.y = Math.max(0, Math.min(screenHeight - dp(44), prefs.getInt("overlay_y", dp(4))));',
+                  '        controlParams.y = Math.max(0, Math.min(screenHeight - dp(92), prefs.getInt("overlay_y", dp(6))));',
+                  "control panel top-left default")
+              service = rep(
+                  service,
+                  '                            controlParams.y = Math.max(0, Math.min(m.heightPixels - window.getHeight(), startY - Math.round(dy)));',
+                  '                            controlParams.y = Math.max(0, Math.min(m.heightPixels - window.getHeight(), startY + Math.round(dy)));',
+                  "control panel drag direction")
+              service = rep(
+                  service,
+                  '''        if ((controlResizeEdges & NoteRollView.EDGE_TOP) != 0) {
+                      height = controlGestureStartHeight - dy;
+                      controlParams.y = controlGestureStartY;
+                      controlHeightUserSized = true;
+                  }
+                  if ((controlResizeEdges & NoteRollView.EDGE_BOTTOM) != 0) {
+                      height = controlGestureStartHeight + dy;
+                      y = controlGestureStartY - dy;
+                      controlHeightUserSized = true;
+                  }''',
+                  '''        if ((controlResizeEdges & NoteRollView.EDGE_TOP) != 0) {
+                      height = controlGestureStartHeight - dy;
+                      y = controlGestureStartY + dy;
+                      controlHeightUserSized = true;
+                  }
+                  if ((controlResizeEdges & NoteRollView.EDGE_BOTTOM) != 0) {
+                      height = controlGestureStartHeight + dy;
+                      y = controlGestureStartY;
+                      controlHeightUserSized = true;
+                  }''',
+                  "top-gravity resize behavior")
+              service = rep(
+                  service,
+                  '        if ((controlResizeEdges & NoteRollView.EDGE_BOTTOM) != 0) controlParams.y = Math.max(0, y);',
+                  '        if ((controlResizeEdges & (NoteRollView.EDGE_TOP | NoteRollView.EDGE_BOTTOM)) != 0) controlParams.y = Math.max(0, y);',
+                  "apply top/bottom resize position")
+              service = rep(
+                  service,
+                  '                            controlParams.y = Math.max(0, Math.min(m.heightPixels - dp(44), originY - Math.round(dy)));',
+                  '                            controlParams.y = Math.max(0, Math.min(m.heightPixels - dp(44), originY + Math.round(dy)));',
+                  "collapsed bubble drag direction")
+              service = rep(
+                  service,
+                  '    public void prepareCalibration() {',
+                  '''    private boolean isCurrentLayoutCalibrated() {
+                      if (InstrumentLayout.MODE_PIANO88.equals(InstrumentLayout.selectedMode(prefs))) {
+                          return InstrumentLayout.isPiano88Calibrated(prefs);
+                      }
+                      return InstrumentLayout.calibratedCount(prefs) == InstrumentLayout.PITCHES.length;
+                  }
+
+                  public void prepareCalibration() {''',
+                  "layout calibration status helper")
+              service = rep(
+                  service,
+                  '''        Button play = smallButton("开始");
+                  pauseButton = new TextView(this);''',
+                  '''        boolean calibrated = isCurrentLayoutCalibrated();
+                  Button play = smallButton("开始");
+                  pauseButton = new TextView(this);''',
+                  "calibration-only control state")
+              service = rep(
+                  service,
+                  '''        panel.addView(play, flowButtonParams());
+                  panel.addView(pauseButton, flowButtonParams());
+                  panel.addView(stop, flowButtonParams());
+                  panel.addView(songs, flowButtonParams());
+                  panel.addView(segment, flowButtonParams());
+                  panel.addView(roll, flowButtonParams());
+                  panel.addView(calibrate, flowButtonParams());
+                  panel.addView(hide, flowButtonParams());
+                  play.setOnClickListener(v -> startPlayback());
+                  pauseButton.setOnClickListener(v -> togglePause());
+                  stop.setOnClickListener(v -> stopPlayback());
+                  songs.setOnClickListener(v -> showSongPickerDialog());
+                  segment.setOnClickListener(v -> beginRangeEditingFromControl());
+                  roll.setOnClickListener(v -> toggleNoteRoll());
+                  calibrate.setOnClickListener(v -> beginCalibration());
+                  hide.setOnClickListener(v -> collapseControlPanel());''',
+                  '''        if (calibrated) {
+                      panel.addView(play, flowButtonParams());
+                      panel.addView(pauseButton, flowButtonParams());
+                      panel.addView(stop, flowButtonParams());
+                      panel.addView(songs, flowButtonParams());
+                      panel.addView(segment, flowButtonParams());
+                      panel.addView(roll, flowButtonParams());
+                  } else {
+                      pauseButton = null;
+                  }
+                  panel.addView(calibrate, flowButtonParams());
+                  panel.addView(hide, flowButtonParams());
+                  if (calibrated) {
+                      play.setOnClickListener(v -> startPlayback());
+                      pauseButton.setOnClickListener(v -> togglePause());
+                      stop.setOnClickListener(v -> stopPlayback());
+                      songs.setOnClickListener(v -> showSongPickerDialog());
+                      segment.setOnClickListener(v -> beginRangeEditingFromControl());
+                      roll.setOnClickListener(v -> toggleNoteRoll());
+                  }
+                  calibrate.setOnClickListener(v -> beginCalibration());
+                  hide.setOnClickListener(v -> collapseControlPanel());''',
+                  "only show calibration before layout is ready")
+              service = rep(
+                  service,
+                  '''            int defaultHeight = Math.min(maxHeight, dp(112));
+                  boolean noteLayoutV3 = prefs.getBoolean("note_roll_layout_v3", false);''',
+                  '''            int defaultHeight = Math.min(maxHeight, dp(132));
+                  if (!prefs.getBoolean("note_roll_header_layout_v4", false)) {
+                      int savedHeight = prefs.getInt("note_roll_height_px", -1);
+                      if (savedHeight > 0 && savedHeight <= dp(118)) {
+                          prefs.edit().putInt("note_roll_height_px", defaultHeight).apply();
+                      }
+                      prefs.edit().putBoolean("note_roll_header_layout_v4", true).apply();
+                  }
+                  boolean noteLayoutV3 = prefs.getBoolean("note_roll_layout_v3", false);''',
+                  "space for title and segment row")
+              service = service.replace(
+                  "COLLAPSED_MUSIC_STATUS_BUBBLE_V1 */",
+                  "COLLAPSED_MUSIC_STATUS_BUBBLE_V1 TOP_LEFT_CALIBRATION_FLOW_V1 */")
+              service_path.write_text(service, encoding="utf-8")
+
+          note = note_path.read_text(encoding="utf-8")
+          if "NOTE_HEADER_INFO_V2" not in note:
+              note = rep(note, "        final float top = 8 * density;", "        final float top = 52 * density;",
+                         "move note field below title, time and segment")
+              note = rep(
+                  note,
+                  '''        // The visual playhead line is intentionally hidden; note fade still uses its anchor.
+
+                  if (scrubbing) {''',
+                  '''        // Low-contrast playhead line restored without a background strip.
+                  paint.setStyle(Paint.Style.STROKE);
+                  paint.setColor(0x66ffffff);
+                  paint.setStrokeWidth(1.15f * density);
+                  canvas.drawLine(playheadX, top, playheadX, bottom, paint);
+                  paint.setStrokeWidth(1f * density);
+                  paint.setStyle(Paint.Style.FILL);
+
+                  if (scrubbing) {''',
+                  "restore subtle playhead")
+              note = rep(
+                  note,
+                  '''    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {
+                      // Song title/time now live in the collapsed player status pill, not over the note blocks.
+                      float buttonTop = 5 * density;
+                      float buttonBottom = Math.min(25 * density, h - 4 * density);
+                      drawHeaderChip(canvas, new RectF(w - 89 * density, buttonTop, w - 64 * density, buttonBottom),
+                              playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);
+                      drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),
+                              rangeEditing ? "选" : "段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);
+                      drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),
+                              "×", 0xff455667, density);
+                  }''',
+                  '''    private void drawHeaderOverlay(Canvas canvas, float w, float h, float density) {
+                      // Header text shares the blank transparent background with the note field.
+                      float left = 8 * density;
+                      float titleMaxWidth = Math.max(12 * density, w - 65 * density);
+                      paint.setStyle(Paint.Style.FILL);
+                      paint.setFakeBoldText(true);
+                      paint.setTextSize(9.5f * density);
+                      paint.setColor(0xfff2f5f4);
+                      CharSequence visibleTitle = android.text.TextUtils.ellipsize(
+                              title, new android.text.TextPaint(paint), titleMaxWidth,
+                              android.text.TextUtils.TruncateAt.END);
+                      canvas.drawText(visibleTitle.toString(), left, 14 * density, paint);
+                      paint.setFakeBoldText(false);
+                      paint.setTextSize(8.2f * density);
+                      paint.setColor(0xccebf0f0);
+                      String time = formatTime(positionMicros) + " / " + formatTime(durationMicros);
+                      CharSequence visibleTime = android.text.TextUtils.ellipsize(
+                              time, new android.text.TextPaint(paint), titleMaxWidth,
+                              android.text.TextUtils.TruncateAt.END);
+                      canvas.drawText(visibleTime.toString(), left, 27 * density, paint);
+
+                      float buttonTop = 5 * density;
+                      float buttonBottom = Math.min(25 * density, h - 4 * density);
+                      drawHeaderChip(canvas, new RectF(w - 61 * density, buttonTop, w - 35 * density, buttonBottom),
+                              playing ? "Ⅱ" : "▶", playing ? 0xff4c8d80 : 0xff455667, density);
+                      drawHeaderChip(canvas, new RectF(w - 32 * density, buttonTop, w - 6 * density, buttonBottom),
+                              "×", 0xff455667, density);
+                      // Keep segment selection below the metadata, far from the close target.
+                      drawHeaderChip(canvas, new RectF(left, 32 * density, left + 39 * density, 49 * density),
+                              rangeEditing ? "完成" : "片段", rangeEditing ? 0xff4c8d80 : 0xff455667, density);
+                  }''',
+                  "move song metadata into transparent note-roll header")
+              note = rep(
+                  note,
+                  '''                if (y < 34 * density && x > w - 34 * density) {
+                      touchMode = TOUCH_CLOSE;
+                  } else if (y < 34 * density && x > w - 63 * density) {
+                      touchMode = TOUCH_SEGMENT;
+                  } else if (y < 34 * density && x > w - 91 * density) {
+                      touchMode = TOUCH_PLAY_PAUSE;
+                  } else if (touchEdges != 0) {''',
+                  '''                if (y < 29 * density && x > w - 34 * density) {
+                      touchMode = TOUCH_CLOSE;
+                  } else if (y < 29 * density && x > w - 63 * density) {
+                      touchMode = TOUCH_PLAY_PAUSE;
+                  } else if (y >= 30 * density && y < 51 * density
+                          && x >= 5 * density && x <= 52 * density) {
+                      touchMode = TOUCH_SEGMENT;
+                  } else if (touchEdges != 0) {''',
+                  "move segment touch target below title/time")
+              note = note.replace(
+                  "/** Compact, resizable and seekable MIDI roll overlay. */",
+                  "/** Compact, resizable and seekable MIDI roll overlay. NOTE_HEADER_INFO_V2 */")
+              note_path.write_text(note, encoding="utf-8")
+
+          service = service_path.read_text(encoding="utf-8")
+          note = note_path.read_text(encoding="utf-8")
+          if "TOP_LEFT_CALIBRATION_FLOW_V1" not in service:
+              raise SystemExit("Top-left/calibration marker missing.")
+          if "NOTE_HEADER_INFO_V2" not in note:
+              raise SystemExit("Note header marker missing.")
+          if "0x66ffffff" not in note or "rangeEditing ? \"完成\" : \"片段\"" not in note:
+              raise SystemExit("Subtle playhead or new segment-row UI not present.")
+          print("Applied top-left overlay, calibration-only controls, transparent note metadata, subtle playhead and second-row segment button.")
+          PY
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
