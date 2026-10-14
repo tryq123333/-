@@ -1,0 +1,147 @@
+diff -ruN patchold/.github/workflows/build-apk.yml patchnew/.github/workflows/build-apk.yml
+--- patchold/.github/workflows/build-apk.yml	2026-10-14 18:23:50.135994792 +0000
++++ patchnew/.github/workflows/build-apk.yml	2026-10-14 18:23:50.136894681 +0000
+@@ -21,12 +21,16 @@
+           java-version: '17'
+       - name: Set up Android SDK
+         uses: android-actions/setup-android@v3
++        with:
++          packages: platform-tools
+       - name: Install Android platform and build tools
+         run: sdkmanager --install "platforms;android-35" "build-tools;35.0.0"
+       - name: Set up Gradle cache
+         uses: gradle/actions/setup-gradle@v4
+       - name: Build debug APK
+-        run: ./gradlew --no-daemon assembleDebug
++        run: |
++          chmod +x gradlew
++          ./gradlew --no-daemon assembleDebug
+       - name: Run JVM tests
+         run: ./gradlew --no-daemon testDebugUnitTest
+       - name: Upload APK
+diff -ruN patchold/app/src/main/java/com/luoke/autopiano/MidiParser.java patchnew/app/src/main/java/com/luoke/autopiano/MidiParser.java
+--- patchold/app/src/main/java/com/luoke/autopiano/MidiParser.java	2026-10-14 18:23:12.968308085 +0000
++++ patchnew/app/src/main/java/com/luoke/autopiano/MidiParser.java	2026-10-14 18:23:12.967676547 +0000
+@@ -4,6 +4,8 @@
+ import java.io.IOException;
+ import java.nio.file.Files;
+ import java.util.ArrayList;
++import java.util.ArrayDeque;
++import java.util.Deque;
+ import java.util.Comparator;
+ import java.util.HashMap;
+ import java.util.List;
+@@ -20,12 +22,15 @@
+         public final int pitch;
+         public final int velocity;
+         public final int order;
++        /** Note gate length from MIDI note-on to note-off; may be zero for incomplete files. */
++        public final long durationMicros;
+ 
+-        NoteEvent(long startMicros, int pitch, int velocity, int order) {
++        NoteEvent(long startMicros, int pitch, int velocity, int order, long durationMicros) {
+             this.startMicros = startMicros;
+             this.pitch = pitch;
+             this.velocity = velocity;
+             this.order = order;
++            this.durationMicros = Math.max(0L, durationMicros);
+         }
+     }
+ 
+@@ -83,11 +88,12 @@
+ 
+     private static final class RawNote {
+         final long tick;
++        long endTick;
+         final int pitch;
+         final int velocity;
+         final int order;
+         RawNote(long tick, int pitch, int velocity, int order) {
+-            this.tick = tick; this.pitch = pitch; this.velocity = velocity; this.order = order;
++            this.tick = tick; this.endTick = -1L; this.pitch = pitch; this.velocity = velocity; this.order = order;
+         }
+     }
+ 
+@@ -130,6 +136,7 @@
+         tempos.add(new Tempo(0, DEFAULT_MICROS_PER_QUARTER, -1));
+         int globalOrder = 0;
+         int parsedTracks = 0;
++        long songEndTick = 0;
+ 
+         while (c.pos + 8 <= c.end && parsedTracks < trackCount) {
+             String tag = fourCc(c);
+@@ -144,8 +151,10 @@
+             Cursor t = new Cursor(bytes, c.pos, trackEnd);
+             long tick = 0;
+             int runningStatus = 0;
++            Map<Integer, Deque<RawNote>> activeNotes = new HashMap<>();
+             while (t.pos < t.end) {
+                 tick += t.vlq();
++                songEndTick = Math.max(songEndTick, tick);
+                 int first = t.u8();
+                 int status;
+                 int firstData = -1;
+@@ -167,6 +176,7 @@
+                     } else {
+                         t.skip(length);
+                     }
++                    if (metaType == 0x2f) break;
+                     continue;
+                 }
+                 if (status == 0xf0 || status == 0xf7) {
+@@ -179,8 +189,17 @@
+                 int dataLength = (command == 0xc0 || command == 0xd0) ? 1 : 2;
+                 int d1 = firstData >= 0 ? firstData : t.u8();
+                 int d2 = dataLength == 2 ? t.u8() : 0;
++                int channelPitchKey = ((status & 0x0f) << 8) | (d1 & 0x7f);
+                 if (command == 0x90 && d2 > 0) {
+-                    rawNotes.add(new RawNote(tick, d1 & 0x7f, d2 & 0x7f, globalOrder++));
++                    RawNote note = new RawNote(tick, d1 & 0x7f, d2 & 0x7f, globalOrder++);
++                    rawNotes.add(note);
++                    activeNotes.computeIfAbsent(channelPitchKey, ignored -> new ArrayDeque<>()).addLast(note);
++                } else if (command == 0x80 || (command == 0x90 && d2 == 0)) {
++                    Deque<RawNote> active = activeNotes.get(channelPitchKey);
++                    if (active != null && !active.isEmpty()) {
++                        RawNote note = active.removeFirst();
++                        note.endTick = Math.max(note.tick, tick);
++                    }
+                 }
+             }
+             c.pos = trackEnd;
+@@ -212,13 +231,16 @@
+ 
+         rawNotes.sort(Comparator.comparingLong((RawNote n) -> n.tick).thenComparingInt(n -> n.order));
+         List<NoteEvent> result = new ArrayList<>(rawNotes.size());
+-        long duration = 0;
+-        int segmentIndex = 0;
++        long duration = tickToMicros(songEndTick, segments, ppq);
+         for (RawNote raw : rawNotes) {
+-            while (segmentIndex + 1 < segments.size() && segments.get(segmentIndex + 1).startTick <= raw.tick) segmentIndex++;
+-            TempoSegment segment = segments.get(segmentIndex);
+-            long at = segment.startMicros + ((raw.tick - segment.startTick) * (long) segment.microsPerQuarter) / ppq;
+-            result.add(new NoteEvent(at, raw.pitch, raw.velocity, raw.order));
++            long at = tickToMicros(raw.tick, segments, ppq);
++            // In malformed/truncated MIDIs, unmatched note-ons should not create unbounded holds.
++            long endTick = raw.endTick >= raw.tick ? raw.endTick : Math.max(raw.tick, songEndTick);
++            if (endTick <= raw.tick) endTick = raw.tick + Math.max(1L, ppq / 4L);
++            long end = tickToMicros(endTick, segments, ppq);
++            if (end < at) end = at;
++            result.add(new NoteEvent(at, raw.pitch, raw.velocity, raw.order, end - at));
++            duration = Math.max(duration, end);
++            duration = Math.max(duration, at);
++        }
++        result.sort(Comparator.comparingLong((NoteEvent n) -> n.startMicros).thenComparingInt(n -> n.order));
++        return new MidiSong(file.getName(), ppq, result, duration);
++    }
++
++
++    private static long tickToMicros(long tick, List<TempoSegment> segments, int ppq) {
++        int index = 0;
++        while (index + 1 < segments.size() && segments.get(index + 1).startTick <= tick) index++;
++        TempoSegment segment = segments.get(index);
++        return segment.startMicros + ((Math.max(0L, tick - segment.startTick) * (long) segment.microsPerQuarter) / ppq);
++    }
++
++    private static String fourCc(Cursor c) throws IOException {
++        StringBuilder b = new StringBuilder(4);
++        for (int i = 0; i < 4; i++) b.append((char) c.u8());

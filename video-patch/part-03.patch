@@ -1,0 +1,81 @@
++        long endMs = (savedEnd <= 0L || savedEnd > duration / 1000L) ? duration / 1000L : savedEnd;
++        long start = Math.min(duration, startMs * 1000L);
++        long end = Math.min(duration, endMs * 1000L);
++        if (end <= start) { start = 0L; end = duration; }
++        if (!playbackActive) playbackPositionMicros = start;
++        int speed = Math.max(50, Math.min(200, prefs.getInt(MainActivity.KEY_SPEED, 100)));
++        noteRollView.setData(currentSong,
++                prefs.getString(MainActivity.KEY_SONG_NAME, currentSong.name),
++                prefs.getInt(MainActivity.KEY_TRANSPOSE, 0), playbackPositionMicros,
++                duration, start, end, speed, playbackActive && !paused);
++    }
++
++    private void showSegmentDialog() {
++        if (Looper.myLooper() != Looper.getMainLooper()) {
++            mainHandler.post(this::showSegmentDialog);
++            return;
++        }
++        if (playbackThread != null && playbackThread.isAlive()) {
++            toast("请先暂停或停止演奏，再修改练习片段。");
++            return;
++        }
++        MidiParser.MidiSong song = readCurrentSong();
++        if (song == null) {
++            toast("请先在主界面导入 MIDI 曲谱。");
++            return;
++        }
++        currentSong = song;
++        final long durationMs = Math.max(1L, (song.durationMicros + 999L) / 1000L);
++        long savedStart = Math.max(0L, Math.min(durationMs, prefs.getLong(KEY_RANGE_START_MS, 0L)));
++        long savedEnd = prefs.getLong(KEY_RANGE_END_MS, -1L);
++        if (savedEnd <= 0L || savedEnd > durationMs) savedEnd = durationMs;
++        if (savedEnd <= savedStart) { savedStart = 0L; savedEnd = durationMs; }
++        final int[] startPermille = { (int) Math.min(1000L, savedStart * 1000L / durationMs) };
++        final int[] endPermille = { (int) Math.min(1000L, savedEnd * 1000L / durationMs) };
++        final int minGap = (int) Math.max(1L, Math.min(1000L, (500L * 1000L + durationMs - 1L) / durationMs));
++        final int[] speed = { Math.max(50, Math.min(200, prefs.getInt(MainActivity.KEY_SPEED, 100))) };
+
++        FrameLayout root = new FrameLayout(this);
++        root.setBackgroundColor(0x99060b12);
++        root.setClickable(true);
++        root.setOnClickListener(v -> dismissSegmentDialog());
++
++        LinearLayout card = new LinearLayout(this);
++        card.setOrientation(LinearLayout.VERTICAL);
++        card.setPadding(dp(14), dp(10), dp(14), dp(12));
++        card.setBackground(rounded(0xfffbfcfd, dp(16)));
++        card.setClickable(true);
++        card.setOnClickListener(v -> { /* Consume taps inside the dialog. */ });
++
++        TextView title = new TextView(this);
++        title.setText("选择练习片段");
++        title.setTextSize(19);
++        title.setTextColor(0xff18222c);
++        title.setTypeface(null, android.graphics.Typeface.BOLD);
++        title.setGravity(Gravity.CENTER);
++        card.addView(title, new LinearLayout.LayoutParams(-1, dp(28)));
++
++        TextView tip = new TextView(this);
++        tip.setText("拖动起止位置，先试听选中部分；确认后，“开始”只演奏该片段。");
++        tip.setTextSize(11);
++        tip.setTextColor(0xff6c737d);
++        tip.setPadding(0, dp(1), 0, dp(3));
++        card.addView(tip);
++
++        TextView rangeSummary = new TextView(this);
++        rangeSummary.setTextColor(0xff303942);
++        rangeSummary.setTextSize(12);
++        rangeSummary.setTypeface(null, android.graphics.Typeface.BOLD);
++        card.addView(rangeSummary);
++
++        LinearLayout rangeRow = new LinearLayout(this);
++        rangeRow.setOrientation(LinearLayout.HORIZONTAL);
++        rangeRow.setGravity(Gravity.CENTER_VERTICAL);
++        LinearLayout startColumn = new LinearLayout(this);
++        startColumn.setOrientation(LinearLayout.VERTICAL);
++        startColumn.setPadding(dp(3), 0, dp(8), 0);
++        LinearLayout endColumn = new LinearLayout(this);
++        endColumn.setOrientation(LinearLayout.VERTICAL);
++        endColumn.setPadding(dp(8), 0, dp(3), 0);
++        TextView startLabel = new TextView(this);
++        TextVie

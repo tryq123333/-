@@ -1,0 +1,140 @@
+diff -ruN patchold/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java patchnew/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+--- patchold/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java	2026-10-14 18:23:12.968086299 +0000
++++ patchnew/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java	2026-10-14 18:23:12.967619423 +0000
+@@ -19,6 +19,7 @@
+ import android.widget.Button;
+ import android.widget.FrameLayout;
+ import android.widget.LinearLayout;
++import android.widget.SeekBar;
+ import android.widget.TextView;
+ import android.widget.Toast;
+ 
+@@ -40,6 +41,9 @@
+     private SharedPreferences prefs;
+     private View controlOverlay;
+     private View calibrationOverlay;
++    private View segmentOverlay;
++    private NoteRollView noteRollView;
++    private WindowManager.LayoutParams noteRollParams;
+     private TextView pauseButton;
+     private WindowManager.LayoutParams controlParams;
+ 
+@@ -51,8 +55,14 @@
+     private long playbackStartMs;
+     private long pausedDurationMs;
+     private long pauseStartedMs;
++    private volatile long playbackPositionMicros;
++    private volatile long playbackRangeStartMicros;
++    private volatile long playbackRangeEndMicros;
++    private volatile int activeSpeedPercent = 100;
++    private volatile boolean playbackActive;
++    private volatile MidiParser.MidiSong currentSong;
++    private static final String KEY_RANGE_START_MS = "practice_start_ms";
++    private static final String KEY_RANGE_END_MS = "practice_end_ms";
+     private static final int TAP_DURATION_MS = 38;
+     private static final long CHORD_WINDOW_MICROS = 3_000L;
+ 
+@@ -73,8 +83,12 @@
+         stopPlayback();
+         removeOverlay(calibrationOverlay);
+         removeOverlay(controlOverlay);
++        removeOverlay(segmentOverlay);
++        removeOverlay(noteRollView);
+         calibrationOverlay = null;
+         controlOverlay = null;
++        segmentOverlay = null;
++        noteRollView = null;
+         if (instance == this) instance = null;
+         super.onDestroy();
+     }
+@@ -121,16 +135,22 @@
+         pauseButton.setPadding(dp(10), dp(7), dp(10), dp(7));
+         pauseButton.setBackground(rounded(0xff4b6279, dp(8)));
+         Button stop = smallButton("停止");
++        Button segment = smallButton("片段");
++        Button roll = smallButton("谱面");
+         Button calibrate = smallButton("校准");
+         Button hide = smallButton("收起");
+         panel.addView(play, buttonParams());
+         panel.addView(pauseButton, buttonParams());
+         panel.addView(stop, buttonParams());
++        panel.addView(segment, buttonParams());
++        panel.addView(roll, buttonParams());
+         panel.addView(calibrate, buttonParams());
+         panel.addView(hide, buttonParams());
+         play.setOnClickListener(v -> startPlayback());
+         pauseButton.setOnClickListener(v -> togglePause());
+         stop.setOnClickListener(v -> stopPlayback());
++        segment.setOnClickListener(v -> showSegmentDialog());
++        roll.setOnClickListener(v -> toggleNoteRoll());
+         calibrate.setOnClickListener(v -> beginCalibration());
+         hide.setOnClickListener(v -> collapseControlPanel());
+ 
+@@ -250,6 +270,289 @@
+         pauseButton = null;
+     }
+ 
++    private void toggleNoteRoll() {
++        if (Looper.myLooper() != Looper.getMainLooper()) {
++            mainHandler.post(this::toggleNoteRoll);
++            return;
++        }
++        if (noteRollView != null) {
++            removeOverlay(noteRollView);
++            noteRollView = null;
++            prefs.edit().putBoolean("note_roll_enabled", false).apply();
++            toast("音符谱面已隐藏。再次点“谱面”可显示。 ");
++        } else {
++            prefs.edit().putBoolean("note_roll_enabled", true).apply();
++            showNoteRoll();
++        }
++    }
++
++    private MidiParser.MidiSong readCurrentSong() {
++        String path = prefs.getString(MainActivity.KEY_SONG_PATH, "");
++        if (path == null || path.isEmpty() || !new File(path).isFile()) return null;
++        try { return MidiParser.parse(new File(path)); }
++        catch (Exception ex) { toast("谱面载入失败：" + ex.getMessage()); return null; }
++    }
++
++    private void showNoteRoll() {
++        if (Looper.myLooper() != Looper.getMainLooper()) {
++            mainHandler.post(this::showNoteRoll);
++            return;
++        }
++        if (windowManager == null) return;
++        MidiParser.MidiSong song = readCurrentSong();
++        if (song == null) {
++            toast("请先在主界面导入 MIDI 曲谱，再显示音符谱面。");
++            return;
++        }
++        currentSong = song;
++        if (noteRollView == null) {
++            noteRollView = new NoteRollView(this);
++            noteRollParams = new WindowManager.LayoutParams(
++                    WindowManager.LayoutParams.MATCH_PARENT, dp(116),
++                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
++                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
++                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
++                    PixelFormat.TRANSLUCENT);
++            noteRollParams.gravity = Gravity.TOP | Gravity.LEFT;
++            noteRollParams.x = 0;
++            noteRollParams.y = dp(3);
++            try { windowManager.addView(noteRollView, noteRollParams); }
++            catch (Exception e) {
++                noteRollView = null;
++                noteRollParams = null;
++                toast("音符谱面无法显示，请重新开启无障碍服务后重试。");
++                return;
++            }
++        }
++        refreshNoteRollData();
++    }
++
++    private void refreshNoteRollData() {
++        if (noteRollView == null) return;
++        if (currentSong == null) currentSong = readCurrentSong();
++        if (currentSong == null) return;
++        long duration = currentSong.durationMicros;
++        long startMs = Math.max(0L, prefs.getLong(KEY_RANGE_START_MS, 0L));
++        long savedEnd = prefs.getLong(KEY_RANGE_END_MS, -1L);
