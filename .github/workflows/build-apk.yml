@@ -289,7 +289,7 @@ jobs:
               service = rep(
                   service,
                   '''            int defaultHeight = Math.min(maxHeight, dp(112));
-                  boolean noteLayoutV3 = prefs.getBoolean("note_roll_layout_v3", false);''',
+            boolean noteLayoutV3 = prefs.getBoolean("note_roll_layout_v3", false);''',
                   '''            int defaultHeight = Math.min(maxHeight, dp(132));
                   if (!prefs.getBoolean("note_roll_header_layout_v4", false)) {
                       int savedHeight = prefs.getInt("note_roll_height_px", -1);
