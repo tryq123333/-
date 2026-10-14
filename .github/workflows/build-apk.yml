@@ -144,6 +144,16 @@ jobs:
             echo "The player status pill and floating note styling are already applied."
           fi
 
+      - name: Ensure collapsed music icon field exists
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          if ! grep -q 'private TextView collapsedMusicIcon;' "$SERVICE"; then
+            patch --dry-run -p1 -d LuokeAutoPiano < .github/patches/status-bubble-field-fix.patch
+            patch -p1 -d LuokeAutoPiano < .github/patches/status-bubble-field-fix.patch
+          else
+            echo "Collapsed music icon field is already present."
+          fi
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
