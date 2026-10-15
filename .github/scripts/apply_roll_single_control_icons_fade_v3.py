@@ -77,8 +77,9 @@ note = once(note, "        paint.setColor(0xfff2f5f4);",
 note = once(note, "        paint.setColor(0xccebf0f0);",
                  "        paint.setColor(0x88ebf0f0);",
                  "fade song time")
-note = note.replace("NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2",
-                    "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2 " + MARKER, 1)
+if MARKER not in note:
+    note = note.replace("NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2",
+                        "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2 " + MARKER, 1)
 NOTE.write_text(note, encoding="utf-8")
 
 # A single "演奏" action in the floating panel as well as in the note roll: tap to start,
@@ -183,8 +184,9 @@ service = once(service,
     }""",
     "refresh unified button highlight during playback")
 
-service = service.replace("NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2",
-                          "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2 " + MARKER, 1)
+if MARKER not in service:
+    service = service.replace("NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2",
+                              "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2 " + MARKER, 1)
 SERVICE.write_text(service, encoding="utf-8")
 
 # Postconditions: ensure the old separated UI cannot creep back into either floating surface.
