@@ -148,3 +148,14 @@
 - 新脚本：`.github/scripts/apply_roll_reference_icon_and_app_identity_v5.py`，在 v4 触控/窗口脚本之后、Gradle 编译之前执行。修正了 V3 脚本重复构建时的兼容检查，使其能够接受已经存在的原图渲染及合并“演奏”按钮/新增控制面板状态刷新，不再强行要求旧手绘图或旧视图布局。
 - 已检查最终 source ZIP 可完整解压，并核对上述 manifest、strings、icon、图集大小、NoteRollView 完整图标 crop 及 frame-first 渐显逻辑。APK ZIP 完整性也通过检查。未完成 Android 真机测试；后续优先让用户确认图标实际大小/映射、方块先显图标后显的动画、桌面名称和白底黑音符图标是否按预期显示。
 
+## 12. 2026-10-15 隐藏谱面内回起点、左移音符入场、滑动游标代数与强制刷新桌面标识
+
+- 最终成功构建 Run #98：<https://github.com/tryq123333/-/actions/runs/38687196134>；APK 编译、JVM 单元测试、APK 上传、源 ZIP 上传及同步全部 success。APK artifact ID `11949823469`，source ZIP artifact ID `11950187969`。根目录源码 ZIP blob SHA：`122c705a50694227fe94818114d1f00601ab2d5f`。APK 已从本次成功构建的 artifact 重新抽出并核对 ZIP 完整性；本次版本为 versionCode 2、versionName 0.2.0，不能再混用 Run #95 的旧安装包。
+- 新脚本：`.github/scripts/apply_roll_final_controls_seek_launcher_v6.py`，在 V5 图标/身份修正之后执行。
+- NoteRollView 顶部已移除自身的 `⏮︎` 按钮，仅保留关闭和统一“演奏”按钮，并将“演奏”的命中区域扩为原来的右侧空位。主悬浮控制面板里的“谱面”和 `⏮︎` 仍由 V4 按 noteRollView 状态隐藏/恢复。
+- 新增 `NoteRollGestureMath.pastEntranceBuffer` 与 JVM 测试：音符左边缘至少进入可见画布 24dp 后才参与绘制，给有色音符方块和完整键图保留显示空间，避免图标从窗口最右侧抢先出现。
+- 新增 `playbackUiGeneration`：拖动开始、定位提交和抬手结束都递增代数；播放线程排队的游标帧带有代数快照，仅当代数仍匹配且未暂停/停止时才更新 UI。这样即使旧帧在抬手恢复后才执行，也不能把播放位置覆回旧进度。
+- 为确保用户设备实际获得新桌面元数据，`AndroidManifest.xml` 改为使用新资源 `@string/launcher_app_name`、`@drawable/launcher_luoke_v2`（`icon` 与 `roundIcon`），新图标 XML 内容为白底黑音符；同时把 versionCode 从 1 提至 2、versionName 改为 0.2.0，以避开旧安装包/桌面缓存混淆。
+- 用户说的新视频在私有仓库当前路径为 `VID_20261015_132056.mp4`（约 11.6 MB）。GitHub 连接能读到该文件存在，但二进制 blob 无法解码为可预览帧；旧路径 `VID_20261015_102652_1.mp4` 已删除。因此这轮没有声称看过视频画面，轻滑问题按已确认的播放线程/UI 帧竞态修正。若需要针对具体帧/手势轨迹做进一步定位，请让用户直接将 MP4 上传到对话。
+- 后续真机验证：更新安装 versionCode 2 的 APK后，确认应用桌面名称/图标更新；打开谱面时确认主面板及谱面头部都没有 `⏮︎`，关闭谱面后主面板的按钮恢复；播放中在底部进度条轻滑、抬手后确认不回跳旧帧；确认音符方块在距右边缘 24dp 后出现且内部键图不抢先。
+
