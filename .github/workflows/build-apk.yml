@@ -402,7 +402,7 @@ jobs:
               raise SystemExit("Note header marker missing.")
           has_segment_label = ('rangeEditing ? "完成" : "片段"' in note
                                or 'rangeEditing ? "完成" : "A/B循环"' in note)
-          if "0x66ffffff" not in note or not has_segment_label:
+          if not any(alpha in note for alpha in ("0x66ffffff", "0x26ffffff")) or not has_segment_label:
               raise SystemExit("Subtle playhead or A/B segment row UI not present.")
           print("Applied top-left overlay, calibration-only controls, transparent note metadata, subtle playhead and second-row segment button.")
           PY
