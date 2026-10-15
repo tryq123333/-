@@ -775,7 +775,7 @@ if MARKER not in note or MARKER not in service or MARKER not in activity:
     raise SystemExit("Song-specific roll UI marker missing.")
 for check, label in [
     ('"演奏", playing ? 0xff4c8d80 : 0xff455667', "single highlighted performance control"),
-    ('drawGameKeyIcon(canvas, badge.centerX()', "game key icon drawing"),
+    ('useGameKeyIcons && keyIconIndex >= 0', "game key icon drawing"),
     ('float afterRewind = 100 * density;', "playhead next to rewind control"),
     ('void onBeginSeekGesture()', "scrub start callback"),
     ('void onEndSeekGesture()', "scrub end callback"),
