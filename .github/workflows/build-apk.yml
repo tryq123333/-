@@ -498,6 +498,9 @@ jobs:
       - name: Apply song-specific note UI, transpose and gesture fixes
         run: python .github/scripts/apply_song_specific_roll_ui_v2.py
 
+      - name: Use one 演奏 control, original game key icons and faded playhead
+        run: python .github/scripts/apply_roll_single_control_icons_fade_v3.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
