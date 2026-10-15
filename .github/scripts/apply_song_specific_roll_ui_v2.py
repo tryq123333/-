@@ -320,6 +320,8 @@ if MARKER not in activity:
         "    static final String KEY_SPEED = \"speed_percent\";", 1)
     activity = activity.replace("    private static final int REQUEST_MIDI = 1001;",
         "    private static final int REQUEST_MIDI = 1001;\n    /** SONG_SPECIFIC_ROLL_UI_V2 */", 1)
+    if "import android.content.SharedPreferences;" not in activity:
+        activity = activity.replace("import android.content.Intent;", "import android.content.Intent;\nimport android.content.SharedPreferences;", 1)
     ACTIVITY.write_text(activity, encoding="utf-8")
 
 
