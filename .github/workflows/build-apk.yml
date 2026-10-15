@@ -474,19 +474,17 @@ jobs:
           grep -q 'A/B循环已开启' "$SERVICE"
           grep -q 'A/B循环' "$NOTE_VIEW"
 
-      - name: Apply A/B full-song reset and settings reset patch
+      - name: Apply A/B full-song reset and settings reset
         run: |
           SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
           if ! grep -q 'AB_LOOP_FIXES_V2' "$SERVICE"; then
-            cat .github/patches/ab-loop-fixes-v3.part-*.txt > /tmp/ab-loop-fixes-v3.patch
-            python .github/scripts/trim_ab_loop_patch.py
-          patch --dry-run -p1 < /tmp/ab-loop-fixes-v3.patch
-            patch -p1 < /tmp/ab-loop-fixes-v3.patch
+            python .github/scripts/apply_ab_loop_range_logic_v3.py
           else
-            echo "A/B playback-range fixes and reset button are already present."
+            echo "A/B full-song range handling and reset button are already applied."
           fi
           grep -q 'AB_LOOP_FIXES_V2' "$SERVICE"
           grep -q '重置 A/B' "$SERVICE"
+          grep -q 'A/B循环已关闭，播放范围已恢复整首歌' "$SERVICE"
 
       - name: Apply requested note fade, progress opacity, app name and music icon
         run: |
