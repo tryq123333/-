@@ -469,6 +469,30 @@ jobs:
           grep -q 'A/B循环已开启' "$SERVICE"
           grep -q 'A/B循环' "$NOTE_VIEW"
 
+      - name: Apply A/B full-song reset, note fade-under-header, progress and app icon fixes
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          MAIN_ACTIVITY=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MainActivity.java
+          MANIFEST=LuokeAutoPiano/app/src/main/AndroidManifest.xml
+          if ! grep -q 'AB_LOOP_FIXES_V2' "$SERVICE" || ! grep -q 'AB_LOOP_FIXES_V2' "$NOTE_VIEW"; then
+            cat .github/patches/ab-loop-fixes-v3.part-*.txt | tr -d '\r\n\t ' > /tmp/ab-loop-fixes-v3.patch.gz.b64
+            base64 --decode /tmp/ab-loop-fixes-v3.patch.gz.b64 > /tmp/ab-loop-fixes-v3.patch.gz
+            gzip -t /tmp/ab-loop-fixes-v3.patch.gz
+            gzip -dc /tmp/ab-loop-fixes-v3.patch.gz > /tmp/ab-loop-fixes-v3.patch
+            patch --dry-run -p1 < /tmp/ab-loop-fixes-v3.patch
+            patch -p1 < /tmp/ab-loop-fixes-v3.patch
+          else
+            echo "A/B range, note fade and app identity fixes are already present."
+          fi
+          grep -q 'AB_LOOP_FIXES_V2' "$SERVICE"
+          grep -q 'AB_LOOP_FIXES_V2' "$NOTE_VIEW"
+          grep -q '重置 A/B' "$SERVICE"
+          grep -q 'android:icon="@drawable/ic_music_note"' "$MANIFEST"
+          test -f LuokeAutoPiano/app/src/main/res/drawable/ic_music_note.xml
+          grep -q '洛克乐器演奏' "$MAIN_ACTIVITY"
+          grep -q '<string name="app_name">洛克乐器演奏</string>' LuokeAutoPiano/app/src/main/res/values/strings.xml
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
