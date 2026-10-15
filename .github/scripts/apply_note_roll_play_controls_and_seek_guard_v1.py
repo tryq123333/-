@@ -223,11 +223,15 @@ if MARKER not in note:
     note = note.replace(old_cancel, new_cancel, 1)
     NOTE.write_text(note, encoding="utf-8")
 
-old_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, this.rangeStartMicros, this.rangeEndMicros);"
-new_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, seekRangeStart(), seekRangeEnd());"
-if old_cursor_clamp in note:
-    note = note.replace(old_cursor_clamp, new_cursor_clamp)
-if note.count(new_cursor_clamp) != 2:
+old_data_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, this.rangeStartMicros, this.rangeEndMicros);"
+new_data_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, seekRangeStart(), seekRangeEnd());"
+old_set_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, rangeStartMicros, rangeEndMicros);"
+new_set_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, seekRangeStart(), seekRangeEnd());"
+if old_data_cursor_clamp in note:
+    note = note.replace(old_data_cursor_clamp, new_data_cursor_clamp, 1)
+if old_set_cursor_clamp in note:
+    note = note.replace(old_set_cursor_clamp, new_set_cursor_clamp, 1)
+if new_data_cursor_clamp not in note or new_set_cursor_clamp not in note:
     raise SystemExit("Cursor clamp must use active whole-song/A-B range in both setters.")
 
 old_absolute_seek_bounds = """        long start = Math.max(0L, rangeStartMicros);
