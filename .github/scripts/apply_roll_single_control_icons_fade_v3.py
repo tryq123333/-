@@ -167,13 +167,13 @@ if "private void toggleUnifiedPlayback()" not in service:
     service = once(service, "    private void updateControlPanelPlaybackButtons() {",
                     helper + "    private void updateControlPanelPlaybackButtons() {",
                     "unified performance state helper")
-service = once(service,
-    """        if (pauseButton != null) pauseButton.setVisibility(visibility);
-    }""",
-    """        if (pauseButton != null) pauseButton.setVisibility(visibility);
-        refreshUnifiedPlaybackButton();
-    }""",
-    "refresh unified button visibility/state")
+visibility_method_start = service.find("    private void updateControlPanelPlaybackButtons() {")
+visibility_method_end = service.find("\n    }", visibility_method_start)
+if visibility_method_start < 0 or visibility_method_end < 0:
+    raise SystemExit("Cannot find the control panel visibility method.")
+visibility_method = service[visibility_method_start:visibility_method_end]
+if "refreshUnifiedPlaybackButton();" not in visibility_method:
+    service = service[:visibility_method_end] + "\n        refreshUnifiedPlaybackButton();" + service[visibility_method_end:]
 service = once(service,
     """        if (miniPlaybackButton != null) {
             boolean alive = playbackThread != null && playbackThread.isAlive();
