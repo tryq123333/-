@@ -491,7 +491,9 @@ jobs:
           python .github/scripts/apply_ab_loop_branding_v3.py
 
       - name: Apply note-roll play, rewind and gesture safeguards
-        run: python .github/scripts/apply_note_roll_play_controls_and_seek_guard_v1.py
+        run: |
+          # Use radial touch slop so diagonal finger jitter does not move the window.
+          python .github/scripts/apply_note_roll_play_controls_and_seek_guard_v1.py
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
