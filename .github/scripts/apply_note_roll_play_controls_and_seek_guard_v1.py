@@ -223,6 +223,63 @@ if MARKER not in note:
     note = note.replace(old_cancel, new_cancel, 1)
     NOTE.write_text(note, encoding="utf-8")
 
+old_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, this.rangeStartMicros, this.rangeEndMicros);"
+new_cursor_clamp = "if (!scrubbing) this.positionMicros = clamp(positionMicros, seekRangeStart(), seekRangeEnd());"
+if old_cursor_clamp in note:
+    note = note.replace(old_cursor_clamp, new_cursor_clamp)
+if note.count(new_cursor_clamp) != 2:
+    raise SystemExit("Cursor clamp must use active whole-song/A-B range in both setters.")
+
+old_absolute_seek_bounds = """        long start = Math.max(0L, rangeStartMicros);
+        long end = Math.max(start, rangeEndMicros);
+"""
+new_absolute_seek_bounds = """        long start = seekRangeStart();
+        long end = seekRangeEnd();
+"""
+if old_absolute_seek_bounds in note:
+    note = note.replace(old_absolute_seek_bounds, new_absolute_seek_bounds, 1)
+if new_absolute_seek_bounds not in note:
+    raise SystemExit("Absolute seek must use the active playback range.")
+
+old_scrub_clamp = "positionDuringScrub = clamp(positionAtDown + delta, rangeStartMicros, safeEnd);"
+new_scrub_clamp = "positionDuringScrub = clamp(positionAtDown + delta, seekRangeStart(), safeEnd);"
+if old_scrub_clamp in note:
+    note = note.replace(old_scrub_clamp, new_scrub_clamp, 1)
+if new_scrub_clamp not in note:
+    raise SystemExit("Gentle scrub must clamp to the active playback range.")
+
+old_safe_end = """    private long safeScrubEnd() {
+        long span = Math.max(0L, rangeEndMicros - rangeStartMicros);
+        long margin = Math.min(500_000L, Math.max(30_000L, span / 200L));
+        return Math.max(rangeStartMicros, rangeEndMicros - margin);
+    }
+"""
+new_safe_end = """    private long seekRangeStart() {
+        return abLoopEnabled ? clamp(rangeStartMicros, 0L, durationMicros) : 0L;
+    }
+
+    private long seekRangeEnd() {
+        long start = seekRangeStart();
+        return abLoopEnabled
+                ? clamp(rangeEndMicros, start, durationMicros)
+                : Math.max(0L, durationMicros);
+    }
+
+    private long safeScrubEnd() {
+        long start = seekRangeStart();
+        long end = seekRangeEnd();
+        long span = Math.max(0L, end - start);
+        long margin = Math.min(500_000L, Math.max(30_000L, span / 200L));
+        return Math.max(start, end - margin);
+    }
+"""
+if old_safe_end in note:
+    note = note.replace(old_safe_end, new_safe_end, 1)
+if new_safe_end not in note:
+    raise SystemExit("Active-range scrub boundary helper was not installed.")
+
+NOTE.write_text(note, encoding="utf-8")
+
 old_movement_threshold = "                if (Math.abs(rawDx) + Math.abs(rawDy) > touchSlop) gestureMoved = true;"
 new_movement_threshold = "                if (Math.hypot(rawDx, rawDy) > touchSlop) gestureMoved = true;"
 if old_movement_threshold in note:
