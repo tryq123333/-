@@ -109,7 +109,10 @@ new_buttons = """        Button play = smallButton("演奏");
         Button segment = smallButton("A/B循环");
         Button roll = smallButton("谱面");
         Button calibrate = smallButton("校准");"""
-service = once(service, old_buttons, new_buttons, "unified floating performance control")
+if old_buttons in service:
+    service = service.replace(old_buttons, new_buttons, 1)
+elif 'Button play = smallButton("演奏");' not in service:
+    raise SystemExit("Neither old split play/pause nor unified 演奏 button exists.")
 service = once(service,
     """        if (calibrated) {
             panel.addView(play, flowButtonParams());
