@@ -303,6 +303,7 @@ if MARKER not in activity:
         """        pitchShiftValue.setText((prefs.getInt(KEY_TRANSPOSE, 0) > 0 ? "+" : "") + prefs.getInt(KEY_TRANSPOSE, 0) + " 半音");""",
         """        String activePath = prefs.getString(KEY_SONG_PATH, "");
         int activeTranspose = songTranspose(prefs, activePath);
+        if (transposeBar != null) transposeBar.setProgress(activeTranspose + 12);
         pitchShiftValue.setText((activeTranspose > 0 ? "+" : "") + activeTranspose + " 半音");""",
         "refresh per-song shift label")
     activity = once(activity,
