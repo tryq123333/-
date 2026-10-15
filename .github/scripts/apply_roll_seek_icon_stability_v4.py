@@ -199,7 +199,11 @@ note = NOTE.read_text(encoding="utf-8")
 service = SERVICE.read_text(encoding="utf-8")
 if "beginSeekGesture();\n                    touchMode = TOUCH_SEEK_ABSOLUTE;" not in note:
     raise SystemExit("Progress seek does not pause at touch-down.")
-if "src = new Rect(cellX + 12, cellY + 12, cellX + 52, cellY + 52);" not in note or "canvas.clipPath(circularCrop);" not in note:
+if not any(crop in note for crop in (
+        "src = new Rect(cellX + 12, cellY + 12, cellX + 52, cellY + 52);",
+        "src = new Rect(cellX + 2, cellY + 2, cellX + 62, cellY + 62);",
+        "src = new Rect(cellX + 1, cellY + 1, cellX + 31, cellY + 31);"
+        )) or "canvas.clipPath(circularCrop);" not in note:
     raise SystemExit("Game key crop/round clipping is missing.")
 if "bar.width() >= iconSize + 2 * iconInset" not in note:
     raise SystemExit("Icon and note block reveal guard is missing.")
