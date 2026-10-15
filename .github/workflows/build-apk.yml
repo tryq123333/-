@@ -492,7 +492,7 @@ jobs:
 
       - name: Apply note-roll play, rewind and gesture safeguards
         run: |
-          # Use radial touch slop so diagonal finger jitter does not move the window.
+          # Idempotently apply controls, conservative seek deltas, and radial touch slop.
           python .github/scripts/apply_note_roll_play_controls_and_seek_guard_v1.py
 
       - name: Set up JDK 17
