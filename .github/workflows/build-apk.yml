@@ -445,7 +445,29 @@ jobs:
           else
             echo "A/B loop settings and playback are already applied."
           fi
+          # Uri is still required for Android's MIDI file picker; only the RocoMusic integration was removed.
+          if ! grep -q '^import android.net.Uri;' "$MAIN_ACTIVITY"; then
+            sed -i '/^import android.content.Intent;$/a import android.net.Uri;' "$MAIN_ACTIVITY"
+          fi
+          # Remove the obsolete range-edit stub so only the new settings-card method remains.
+          python - <<'PY'
+          from pathlib import Path
+          p = Path("LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java")
+          s = p.read_text(encoding="utf-8")
+          old_stub = (
+              "    // SEGMENT_EDIT_IN_ROLL_ONLY_V1: select a slice directly on the note roll; never create a fullscreen blocker.\\n"
+              "    private void showSegmentDialog() {\\n"
+              "        beginRangeEditingFromControl();\\n"
+              "    }\\n\\n"
+          )
+          if old_stub in s:
+              s = s.replace(old_stub, "", 1)
+              p.write_text(s, encoding="utf-8")
+          if s.count("private void showSegmentDialog()") != 1:
+              raise SystemExit("Expected exactly one A/B settings dialog method.")
+          PY
           ! grep -qi 'rocomusic' "$MAIN_ACTIVITY"
+          grep -q '^import android.net.Uri;' "$MAIN_ACTIVITY"
           grep -q 'A/B循环已开启' "$SERVICE"
           grep -q 'A/B循环' "$NOTE_VIEW"
 
