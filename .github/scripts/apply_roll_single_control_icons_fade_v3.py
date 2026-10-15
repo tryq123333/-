@@ -38,12 +38,14 @@ if "gameKeyAtlas = BitmapFactory.decodeResource(getResources(), R.drawable.note_
         "        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();",
         "        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();\n        gameKeyAtlas = BitmapFactory.decodeResource(getResources(), R.drawable.note_key_atlas);",
         "load original key icons")
-note = once(note,
-    """                        drawGameKeyIcon(canvas, badge.centerX(), badge.centerY(),
-                                Math.min(badge.width(), badge.height()) * .5f, keyIconIndex, noteAlpha);""",
-    """                        drawOriginalGameKeyIcon(canvas, badge.centerX(), badge.centerY(),
-                                Math.min(badge.width(), badge.height()), keyIconIndex, noteAlpha);""",
-    "replace hand-drawn icons with exact game pictograms")
+old_icon_call = """                        drawGameKeyIcon(canvas, badge.centerX(), badge.centerY(),
+                                Math.min(badge.width(), badge.height()) * .5f, keyIconIndex, noteAlpha);"""
+new_icon_call = """                        drawOriginalGameKeyIcon(canvas, badge.centerX(), badge.centerY(),
+                                Math.min(badge.width(), badge.height()), keyIconIndex, noteAlpha);"""
+if old_icon_call in note:
+    note = note.replace(old_icon_call, new_icon_call, 1)
+elif "drawOriginalGameKeyIcon(canvas" not in note:
+    raise SystemExit("Neither old hand-drawn nor current original-key icon call exists.")
 
 draw_original = """    private void drawOriginalGameKeyIcon(Canvas canvas, float cx, float cy,
                                          float size, int index, int alpha) {
