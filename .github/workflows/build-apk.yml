@@ -510,6 +510,9 @@ jobs:
       - name: Finalize note-roll controls, reserved note entry, seek frame guard and launcher identity
         run: python .github/scripts/apply_roll_final_controls_seek_launcher_v6.py
 
+      - name: Restore scroll-note rewind beside A/B
+        run: python .github/scripts/apply_roll_rewind_next_to_ab_v7.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
