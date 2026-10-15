@@ -504,6 +504,9 @@ jobs:
       - name: Stabilize note-roll seek, icons, A/B sizing and stopped cursor
         run: python .github/scripts/apply_roll_seek_icon_stability_v4.py
 
+      - name: Apply full key medallions, staged note entrance and correct app name/icon
+        run: python .github/scripts/apply_roll_reference_icon_and_app_identity_v5.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
