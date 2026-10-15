@@ -11,6 +11,12 @@ note = NOTE.read_text(encoding="utf-8")
 service = SERVICE.read_text(encoding="utf-8")
 
 if MARKER not in note:
+    old_movement_threshold = "                if (Math.abs(rawDx) + Math.abs(rawDy) > touchSlop) gestureMoved = true;"
+    new_movement_threshold = "                if (Math.hypot(rawDx, rawDy) > touchSlop) gestureMoved = true;"
+    if old_movement_threshold not in note:
+        raise SystemExit("Cannot locate original gesture movement threshold.")
+    note = note.replace(old_movement_threshold, new_movement_threshold, 1)
+
     note = note.replace(
         "/** Compact resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 AB_LOOP_FADE_BRAND_RESET_V3 NOTE_HEADER_INFO_V2 AB_LOOP_SETTINGS_V1 */",
         "/** Compact resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 AB_LOOP_FADE_BRAND_RESET_V3 NOTE_HEADER_INFO_V2 AB_LOOP_SETTINGS_V1 NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 */",
