@@ -424,8 +424,10 @@ if MARKER not in note or MARKER not in service or MARKER not in MATH.read_text(e
     raise SystemExit("Gesture/playback patch marker missing after write.")
 if '"演奏", playing ? 0xff4c8d80 : 0xff455667' not in note:
     raise SystemExit("The single highlighted 演奏 control was not installed.")
-if '"⏮︎"' not in note or 'Button stop = smallButton("⏮︎")' not in service:
-    raise SystemExit("The rewind icon is missing from one of the controls.")
+# The note-roll rewind may be repositioned by a later post-guard patch; require the
+# floating-panel rewind action here, and let that later patch validate the roll header.
+if 'Button stop = smallButton("⏮︎")' not in service:
+    raise SystemExit("The floating-panel rewind action is missing.")
 if "private void rewindPlaybackToStart()" not in service:
     raise SystemExit("Rewind action was not wired to the playback service.")
 print("Applied unified 演奏 state, A/track rewind, gentle-seek thresholds and window drag jitter guard.")
