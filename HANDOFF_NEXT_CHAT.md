@@ -167,3 +167,11 @@
 - APP versionCode 提升至 3，versionName `0.3.0`。此版本应覆盖前一版 0.2.0。
 - 尚未做真机 UI 回归；安装后确认滚动谱面内 A/B 右侧能看到 `⏮︎` 并且可以点按，同时初始浮窗的对应按钮在谱面打开时仍保持隐藏。
 
+## 14. 2026-10-15 曲目列表实时搜索
+
+- 成功构建 Run #105：<https://github.com/tryq123333/-/actions/runs/38701893207>。APK 编译、JVM 单元测试、APK artifact 上传、源码 ZIP 打包/上传以及源码同步全部 success。APK artifact ID `11957075007`，source ZIP artifact ID `11955979852`。
+- 新脚本：`.github/scripts/apply_song_picker_live_search_v1.py`，在 A/B 右侧回起点的 V7 补丁之后执行；版本号升至 versionCode 4、versionName `0.4.0`。
+- 曲目弹窗标题和说明下新增“搜索已导入的歌曲名”输入框，按输入内容实时过滤 songCard 标签中的歌名（忽略大小写、支持部分匹配）；没有匹配歌曲时显示“没有找到匹配的曲目”。筛选只控制卡片的 View.VISIBLE/GONE，不删曲目、不改变各曲目单独保存的移调值，也不改当前选曲。
+- 为支持真正输入，曲目弹窗 WindowManager LayoutParams 移除了 `FLAG_NOT_FOCUSABLE`，加入键盘调整模式；搜索框可触摸聚焦。其余列表点击选曲、音域检查和各歌独立移调控件保持不变。
+- APK artifact 已解压并运行 ZIP 完整性检查；本地交付路径为 `/mnt/data/LuokeAutoPiano.apk`，文件大小 87,454 字节。尚未手机真机验证搜索框键盘显示和匹配体验。
+
