@@ -4,7 +4,7 @@ import re
 ROOT = Path("LuokeAutoPiano")
 SERVICE = ROOT / "app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java"
 BUILD = ROOT / "app/build.gradle"
-MARKER = "PANEL_ROLL_SYNC_AND_SONG_LIST_RESTORE_V1"
+MARKER = "SONG_LIST_SCROLL_RESTORE_V2"
 
 service = SERVICE.read_text(encoding="utf-8")
 
@@ -15,99 +15,20 @@ def once(source, old, new, label):
         return source
     raise SystemExit("Cannot patch " + label + ": source anchor missing.")
 
-# Fields are deliberately added between methods; they remain class members and survive
-# temporary overlay removal/recreation for the lifetime of the accessibility service.
-if "private boolean noteRollTemporarilyHiddenByCollapse;" not in service:
-    service = once(service,
-        "    private void showControlPanel() {",
-        "    private boolean noteRollTemporarilyHiddenByCollapse;\n\n    private void showControlPanel() {",
-        "note-roll collapsed state field")
+# Keep the scrolling-note window independently controlled. Remove any coupled-collapse
+# code that may have been included by an earlier interrupted build of this patch.
+service = re.sub(r"(?m)^\s*private boolean noteRollTemporarilyHiddenByCollapse;\s*\n", "", service)
+service = re.sub(r"(?ms)^\s*private void restoreNoteRollAfterPanelExpand\(\) \{.*?^\s*\}\s*\n", "", service)
+service = re.sub(r"(?m)^\s*if \(controlOverlay != null\) restoreNoteRollAfterPanelExpand\(\);\s*\n", "", service)
+service = re.sub(r"(?ms)^\s*if \(noteRollView != null && noteRollParams != null\s*&& !noteRollTemporarilyHiddenByCollapse\) \{\s*removeOverlay\(noteRollView\);\s*noteRollTemporarilyHiddenByCollapse = true;\s*\}\s*\n", "", service)
+service = service.replace("            noteRollTemporarilyHiddenByCollapse = false;\n", "")
+service = service.replace("                    noteRollTemporarilyHiddenByCollapse = false;\n", "")
+
 if "private int songPickerScrollY;" not in service:
     service = once(service,
         "    private void showSongPickerDialog() {",
         "    private int songPickerScrollY;\n    private boolean songPickerRevealSelectedOnNextOpen;\n\n    private void showSongPickerDialog() {",
         "remember song list scroll state")
-
-# A collapsed music icon hides the note-roll window too, while leaving the view and playback
-# alive. Expanding the icon re-adds that same view using its saved LayoutParams.
-restore_helper = """    private void restoreNoteRollAfterPanelExpand() {
-        if (!noteRollTemporarilyHiddenByCollapse || noteRollView == null
-                || noteRollParams == null || windowManager == null) return;
-        try {
-            windowManager.addView(noteRollView, noteRollParams);
-            noteRollTemporarilyHiddenByCollapse = false;
-            refreshNoteRollData();
-            updateControlPanelPlaybackButtons();
-        } catch (Exception ex) {
-            toast("音符谱面恢复失败，请再次展开控制面板重试。");
-        }
-    }
-
-"""
-if "private void restoreNoteRollAfterPanelExpand()" not in service:
-    service = once(service,
-        "    private void collapseControlPanel() {",
-        restore_helper + "    private void collapseControlPanel() {",
-        "insert synchronized note-roll restore helper")
-
-service = once(service,
-    """        } catch (Exception e) {
-            controlOverlay = null;
-            toast("悬浮控制面板无法显示，请重启无障碍服务后重试。");
-        }
-    }
-
-    private float controlResizeStartRawX;""",
-    """        } catch (Exception e) {
-            controlOverlay = null;
-            toast("悬浮控制面板无法显示，请重启无障碍服务后重试。");
-        }
-        if (controlOverlay != null) restoreNoteRollAfterPanelExpand();
-    }
-
-    private float controlResizeStartRawX;""",
-    "restore roll when expanded panel becomes visible")
-
-service = once(service,
-    """        removeOverlay(controlOverlay);
-        controlOverlay = null;
-        pauseButton = null;
-        controlPanelCollapsed = true;""",
-    """        if (noteRollView != null && noteRollParams != null
-                && !noteRollTemporarilyHiddenByCollapse) {
-            removeOverlay(noteRollView);
-            noteRollTemporarilyHiddenByCollapse = true;
-        }
-        removeOverlay(controlOverlay);
-        controlOverlay = null;
-        pauseButton = null;
-        controlPanelCollapsed = true;""",
-    "hide note-roll with collapsed music icon")
-
-# Clear only the temporary flag when the user explicitly closes the note roll; the stored
-# preference still records the user's explicit close, unlike a temporary collapse.
-service = service.replace(
-    """        if (noteRollView != null) {
-            removeOverlay(noteRollView);
-            noteRollView = null;
-            updateControlPanelPlaybackButtons();""",
-    """        if (noteRollView != null) {
-            removeOverlay(noteRollView);
-            noteRollView = null;
-            noteRollTemporarilyHiddenByCollapse = false;
-            updateControlPanelPlaybackButtons();""",
-    1)
-service = service.replace(
-    """                @Override public void onClose() {
-                    removeOverlay(noteRollView);
-                    noteRollView = null;
-                    updateControlPanelPlaybackButtons();""",
-    """                @Override public void onClose() {
-                    removeOverlay(noteRollView);
-                    noteRollView = null;
-                    noteRollTemporarilyHiddenByCollapse = false;
-                    updateControlPanelPlaybackButtons();""",
-    1)
 
 # Song picker: remember scroll position, identify each card by its absolute path separately from
 # its name tag (the name tag remains dedicated to live search).
@@ -117,7 +38,7 @@ if picker_start < 0 or picker_end < 0:
     raise SystemExit("Cannot locate song picker method and removal handlers.")
 picker = service[picker_start:picker_end]
 
-if "PANEL_ROLL_SYNC_AND_SONG_LIST_RESTORE_V1" not in picker:
+if "SONG_LIST_SCROLL_RESTORE_V2" not in picker:
     picker = once(picker,
         """        ScrollView scroll = new ScrollView(this);
         LinearLayout rows = new LinearLayout(this);""",
@@ -207,8 +128,8 @@ service = SERVICE.read_text(encoding="utf-8")
 picker_start = service.find("    private void showSongPickerDialog()")
 picker_end = service.find("    private void confirmRemoveImportedSong(", picker_start)
 picker = service[picker_start:picker_end]
-if "noteRollTemporarilyHiddenByCollapse = true;" not in service or "restoreNoteRollAfterPanelExpand()" not in service:
-    raise SystemExit("Roll and collapsed panel are not linked.")
+if "noteRollTemporarilyHiddenByCollapse" in service or "restoreNoteRollAfterPanelExpand()" in service:
+    raise SystemExit("Scrolling-note window must remain independently controllable.")
 if "songPickerScrollY = scrollY;" not in picker or "scroll.scrollTo(0, Math.max(0, Math.min(songPickerScrollY, maxScrollY)));" not in picker:
     raise SystemExit("Song-list scroll restoration is missing.")
 if "songCard.setContentDescription(songPath);" not in picker or "songPickerRevealSelectedOnNextOpen = true;" not in picker:
@@ -217,4 +138,4 @@ if "songPickerRevealSelectedOnNextOpen = false;" not in service[service.find("pr
     raise SystemExit("Removal doesn't preserve the current scroll position.")
 if "versionCode 7" not in BUILD.read_text(encoding="utf-8") or "versionName '0.7.0'" not in BUILD.read_text(encoding="utf-8"):
     raise SystemExit("Application version bump missing.")
-print("Applied synced panel/roll collapse, selected-song scroll restoration and stable scroll after removals; version 0.7.0.")
+print("Applied independent note-roll controls, selected-song scroll restoration and stable scroll after removals; version 0.7.0.")
