@@ -19,6 +19,8 @@ service = SERVICE.read_text(encoding="utf-8")
 activity = ACTIVITY.read_text(encoding="utf-8")
 
 if MARKER not in note:
+    if "import android.graphics.Path;" not in note:
+        note = note.replace("import android.graphics.Paint;", "import android.graphics.Paint;\nimport android.graphics.Path;", 1)
     note = note.replace(
         "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 */",
         "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2 */", 1)
