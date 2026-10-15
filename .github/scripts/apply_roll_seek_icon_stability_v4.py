@@ -182,7 +182,16 @@ new_frame = """                    mainHandler.post(() -> {
                         }
                         refreshMiniPlaybackButton();
                     });"""
-service = replace_once(service, old_frame, new_frame, "ignore stale queued playback cursor frames")
+if old_frame in service:
+    service = service.replace(old_frame, new_frame, 1)
+elif "cursorGeneration == playbackUiGeneration" in service:
+    # The stronger generation-based frame guard from V6 is already present.
+    pass
+elif "playbackActive && !stopRequested && !paused && noteRollView != null" in service:
+    # Accept the intermediate V4 guard when rebuilding from an older source bundle.
+    pass
+else:
+    raise SystemExit("Cannot locate an existing playback cursor frame guard.")
 service = replace_once(service,
     "                if (!stoppedByUser) playbackPositionMicros = playbackRangeEndMicros;\n                if (noteRollView != null) noteRollView.setCursor(playbackPositionMicros, false);\n                playbackThread = null;",
     """                // Keep the last rendered cursor rather than snapping the note window to the
@@ -211,7 +220,10 @@ if "if (noteRollControlButton != null) noteRollControlButton.setVisibility(visib
     raise SystemExit("Note roll button visibility is not tied to note-roll state.")
 if "if (rewindControlButton != null) rewindControlButton.setVisibility(visibility);" not in service:
     raise SystemExit("Rewind button visibility is not tied to note-roll state.")
-if "if (playbackActive && !stopRequested && !paused && noteRollView != null)" not in service:
+if not any(guard in service for guard in (
+        "cursorGeneration == playbackUiGeneration",
+        "if (playbackActive && !stopRequested && !paused && noteRollView != null)"
+        )):
     raise SystemExit("Stale playback frame guard is missing.")
 if "if (!stoppedByUser) playbackPositionMicros = playbackRangeEndMicros;" in service:
     raise SystemExit("Playback still snaps the view to the end after stopping.")
