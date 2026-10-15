@@ -516,6 +516,9 @@ jobs:
       - name: Add live search to imported songs
         run: python .github/scripts/apply_song_picker_live_search_v1.py
 
+      - name: Add multi-select MIDI batch import
+        run: python .github/scripts/apply_batch_midi_import_v1.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
