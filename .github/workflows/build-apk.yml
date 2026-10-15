@@ -492,7 +492,7 @@ jobs:
 
       - name: Apply note-roll play, rewind and gesture safeguards
         run: |
-          # Idempotently apply controls, conservative seek deltas, and radial touch slop.
+          # Idempotently apply controls, active seek-range clamps, and radial touch slop.
           python .github/scripts/apply_note_roll_play_controls_and_seek_guard_v1.py
 
       - name: Set up JDK 17
