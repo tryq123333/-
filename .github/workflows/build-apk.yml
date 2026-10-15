@@ -479,6 +479,20 @@ jobs:
           SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
           if ! grep -q 'AB_LOOP_FIXES_V2' "$SERVICE"; then
             cat .github/patches/ab-loop-fixes-v3.part-*.txt > /tmp/ab-loop-fixes-v3.patch
+            python - <<'PY'
+            from pathlib import Path
+            path = Path("/tmp/ab-loop-fixes-v3.patch")
+            patch = path.read_text(encoding="utf-8")
+            # The old live-worker tail was cut off mid-line in the hosted patch.
+            # Range toggle/reset/startup hunks before it are complete and are sufficient:
+            # disabling A/B stops the old worker and next start uses the full song.
+            unfinished = "@@ -1433,6 +1507,20 @@"
+            if unfinished in patch:
+                patch = patch.split(unfinished, 1)[0].rstrip() + "\\n"
+                path.write_text(patch, encoding="utf-8")
+            if not patch.endswith("\\n"):
+                raise SystemExit("A/B patch must end on a complete line.")
+            PY
             patch --dry-run -p1 < /tmp/ab-loop-fixes-v3.patch
             patch -p1 < /tmp/ab-loop-fixes-v3.patch
           else
