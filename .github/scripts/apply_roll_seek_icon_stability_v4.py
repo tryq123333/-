@@ -175,11 +175,10 @@ old_frame = """                    mainHandler.post(() -> {
                         refreshMiniPlaybackButton();
                     });"""
 new_frame = """                    mainHandler.post(() -> {
-                        // Drop stale frames queued before pause/stop/seek; they otherwise move
-                        // the visible note window after playback has already been frozen.
-                        if (playbackThread == playbackWorker && playbackActive && !stopRequested
-                                && noteRollView != null) {
-                            noteRollView.setCursor(cursor, isRunning && !paused);
+                        // Drop queued frames while playback is paused/stopped or a seek gesture is
+                        // active; they otherwise move the visible note window after it is frozen.
+                        if (playbackActive && !stopRequested && !paused && noteRollView != null) {
+                            noteRollView.setCursor(cursor, isRunning);
                         }
                         refreshMiniPlaybackButton();
                     });"""
@@ -208,7 +207,7 @@ if "if (noteRollControlButton != null) noteRollControlButton.setVisibility(visib
     raise SystemExit("Note roll button visibility is not tied to note-roll state.")
 if "if (rewindControlButton != null) rewindControlButton.setVisibility(visibility);" not in service:
     raise SystemExit("Rewind button visibility is not tied to note-roll state.")
-if "if (playbackThread == playbackWorker && playbackActive && !stopRequested" not in service:
+if "if (playbackActive && !stopRequested && !paused && noteRollView != null)" not in service:
     raise SystemExit("Stale playback frame guard is missing.")
 if "if (!stoppedByUser) playbackPositionMicros = playbackRangeEndMicros;" in service:
     raise SystemExit("Playback still snaps the view to the end after stopping.")
