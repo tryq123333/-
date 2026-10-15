@@ -138,3 +138,13 @@
 - 为使后续构建可重复，工作流旧版游标白线检查现同时接受旧色和已淡化后的 `0x26ffffff`；逐曲目 UI 脚本的图标 postcondition 兼容原图标渲染函数；V3 图标脚本在检测到图集初始化已存在时不再重复写入 `final gameKeyAtlas`，避免再次编译失败。
 - 本轮发现并修复了两次编译问题：游标回调在错误作用域引用 `playbackWorker`，以及图集初始化在不完整源码标记下重复插入。Run #89 的最终 Java 编译和 JVM 单元测试已通过。
 
+## 11. 2026-10-15 按最新九键参考图重做图集、图标先框后图、修正桌面名称和图标配色
+
+- 最终成功构建 Run #95：<https://github.com/tryq123333/-/actions/runs/38685092172>。构建、JVM 单元测试、APK 上传、源码 ZIP 打包/上传以及 ZIP 同步均 success。APK artifact ID `11949473875`，source ZIP artifact ID `11949179006`。主分支 `LuokeAutoPiano.zip` blob SHA `87bdf0bcf2b2c07c8880cd9a1e5fc20e2b00b686`；源码同步提交 `7583e4f575234346f5430d643c4748d6f24cf1ff`。
+- 用户最新九键参考图生成的新图集为 `app/src/main/res/drawable-nodpi/note_key_atlas.webp`，最终是 96x96、RGBA、每格 32px；9 个完整奶白圆形按 T/Y/U、F/G/H/J/K、B 的视觉顺序排列并去除了截图里的琴键字母/深色背景。NoteRollView 使用 32px 单元格的完整图标，不再放大只截中间符号，保持完整圆边和 glyph 比例。
+- 新入场效果：先绘制滚动音符的彩色圆角矩形块，只有在音符方块已从右边进入并有足够可见宽度后，图标才在 5dp 行程内渐显；防止按键图片先于外围方框出现。
+- `AndroidManifest.xml` 的 application label 从硬编码的“洛克自动琴”改为 `@string/app_name`，`strings.xml` 正式名称是“洛克乐器演奏”；service label 保持单独的“洛克自动琴触控服务”。
+- `drawable/ic_music_note.xml` 已反转颜色：背景（旧绿色区域）为白色，原白色音乐符号为黑色；launcher 的 `icon` 和 `roundIcon` 继续引用该向量资源。
+- 新脚本：`.github/scripts/apply_roll_reference_icon_and_app_identity_v5.py`，在 v4 触控/窗口脚本之后、Gradle 编译之前执行。修正了 V3 脚本重复构建时的兼容检查，使其能够接受已经存在的原图渲染及合并“演奏”按钮/新增控制面板状态刷新，不再强行要求旧手绘图或旧视图布局。
+- 已检查最终 source ZIP 可完整解压，并核对上述 manifest、strings、icon、图集大小、NoteRollView 完整图标 crop 及 frame-first 渐显逻辑。APK ZIP 完整性也通过检查。未完成 Android 真机测试；后续优先让用户确认图标实际大小/映射、方块先显图标后显的动画、桌面名称和白底黑音符图标是否按预期显示。
+
