@@ -383,12 +383,15 @@ jobs:
               note_path.write_text(note, encoding="utf-8")
           elif "NOTE_HEADER_INFO_V2" not in note:
               # The current v3 note-roll already has title/time, the faint playhead,
-              # and the segment row. Avoid applying old absolute-layout anchors again.
-              if "drawHeaderOverlay(Canvas canvas" not in note or "0x66ffffff" not in note or 'rangeEditing ? "完成" : "片段"' not in note:
+              # and the A/B row. Preserve its implementation; add only the migration marker.
+              has_segment_label = ('rangeEditing ? "完成" : "片段"' in note
+                                   or 'rangeEditing ? "完成" : "A/B循环"' in note)
+              if "drawHeaderOverlay(Canvas canvas" not in note or "0x66ffffff" not in note or not has_segment_label:
                   raise SystemExit("Current note-roll header lacks expected v3 controls.")
-              note = note.replace(
-                  "/** Compact resizable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 */",
-                  "/** Compact resizable and seekable MIDI roll with icon-anchored controls. ICON_ANCHORED_HEADER_V3 NOTE_HEADER_INFO_V2 */")
+              if "ICON_ANCHORED_HEADER_V3" not in note:
+                  raise SystemExit("Current note-roll header marker is missing.")
+              note = note.replace("ICON_ANCHORED_HEADER_V3",
+                                  "ICON_ANCHORED_HEADER_V3 NOTE_HEADER_INFO_V2", 1)
               note_path.write_text(note, encoding="utf-8")
 
           service = service_path.read_text(encoding="utf-8")
@@ -397,8 +400,10 @@ jobs:
               raise SystemExit("Top-left/calibration marker missing.")
           if "NOTE_HEADER_INFO_V2" not in note:
               raise SystemExit("Note header marker missing.")
-          if "0x66ffffff" not in note or "rangeEditing ? \"完成\" : \"片段\"" not in note:
-              raise SystemExit("Subtle playhead or new segment-row UI not present.")
+          has_segment_label = ('rangeEditing ? "完成" : "片段"' in note
+                               or 'rangeEditing ? "完成" : "A/B循环"' in note)
+          if "0x66ffffff" not in note or not has_segment_label:
+              raise SystemExit("Subtle playhead or A/B segment row UI not present.")
           print("Applied top-left overlay, calibration-only controls, transparent note metadata, subtle playhead and second-row segment button.")
           PY
 
