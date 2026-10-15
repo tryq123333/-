@@ -175,3 +175,12 @@
 - 为支持真正输入，曲目弹窗 WindowManager LayoutParams 移除了 `FLAG_NOT_FOCUSABLE`，加入键盘调整模式；搜索框可触摸聚焦。其余列表点击选曲、音域检查和各歌独立移调控件保持不变。
 - APK artifact 已解压并运行 ZIP 完整性检查；本地交付路径为 `/mnt/data/LuokeAutoPiano.apk`，文件大小 87,454 字节。尚未手机真机验证搜索框键盘显示和匹配体验。
 
+## 15. 2026-10-15 批量导入 MIDI 曲目
+
+- 构建 Run #107：<https://github.com/tryq123333/-/actions/runs/38702800244>。新批量导入补丁执行成功，Android APK 编译、JVM 单元测试、APK 上传、源码 ZIP 打包/上传及源码同步步骤全部 success。APK artifact ID `11957151337`，source ZIP artifact ID `11957056538`。
+- 新补丁脚本 `.github/scripts/apply_batch_midi_import_v1.py`，在实时搜索脚本之后执行；应用版本提高至 versionCode 5 / versionName `0.5.0`。
+- 主界面的导入按钮现在显示“2. 批量导入 MIDI 曲谱（支持多选）”。文档选择器使用 `Intent.EXTRA_ALLOW_MULTIPLE`，兼容 ClipData 多选与原来的单文件 data URI。
+- 每个 URI 分别复制到私有 `files/imported_songs`、验证 MIDI 是否能解析、限制单文件 32 MB；无效文件只清理该文件，不影响同批其他曲目。每首歌各自保存显示名与独立移调初值。
+- 导入一首歌时沿用原行为：立即选中它。批量导入时如已有有效当前选曲则保留当前选曲；如尚无有效选曲，则自动选中第一首成功导入的曲目。导入结束显示成功/失败数量，可从曲目列表及搜索框管理新增曲目。
+- 当前轮交付 APK 已从构建产物解出为 `/mnt/data/LuokeAutoPiano.apk`，大小 88,842 字节，ZIP 完整性检查通过且包含 classes.dex 与 resources.arsc。JVM 单元测试通过；尚未在实体 Android 设备上验证不同文件选择器支持多选的具体 UI 行为。
+
