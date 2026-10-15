@@ -210,8 +210,10 @@ math = MATH.read_text(encoding="utf-8")
 test = TEST.read_text(encoding="utf-8")
 manifest = MANIFEST.read_text(encoding="utf-8")
 build = BUILD.read_text(encoding="utf-8")
-if 'drawHeaderChip(canvas, new RectF(69 * density' in note or '"⏮︎", 0xff455667' in note:
-    raise SystemExit("Rewind is still drawn in the note-roll header.")
+# V7 intentionally restores the note-roll rewind beside A/B; accept that placement.
+if ('drawHeaderChip(canvas, new RectF(69 * density' in note or '"⏮︎", 0xff455667' in note) \
+        and 'new RectF(70 * density, 52 * density, 95 * density, 69 * density)' not in note:
+    raise SystemExit("Rewind is in an unsupported note-roll header position.")
 if "x > 29 * density && x <= 95 * density" not in note:
     raise SystemExit("Unified 演奏 hitbox not expanded.")
 if "pastEntranceBuffer(rawX1, right, density)" not in note or "pastEntranceBuffer(" not in math:
