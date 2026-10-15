@@ -33,10 +33,11 @@ note = once(note,
     "    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);\n    private final int touchSlop;",
     "    private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);\n    private final Bitmap gameKeyAtlas;\n    private final int touchSlop;",
     "original key atlas field")
-note = once(note,
-    "        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();",
-    "        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();\n        gameKeyAtlas = BitmapFactory.decodeResource(getResources(), R.drawable.note_key_atlas);",
-    "load original key icons")
+if "gameKeyAtlas = BitmapFactory.decodeResource(getResources(), R.drawable.note_key_atlas);" not in note:
+    note = once(note,
+        "        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();",
+        "        touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();\n        gameKeyAtlas = BitmapFactory.decodeResource(getResources(), R.drawable.note_key_atlas);",
+        "load original key icons")
 note = once(note,
     """                        drawGameKeyIcon(canvas, badge.centerX(), badge.centerY(),
                                 Math.min(badge.width(), badge.height()) * .5f, keyIconIndex, noteAlpha);""",
