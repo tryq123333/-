@@ -223,6 +223,14 @@ if MARKER not in note:
     note = note.replace(old_cancel, new_cancel, 1)
     NOTE.write_text(note, encoding="utf-8")
 
+old_movement_threshold = "                if (Math.abs(rawDx) + Math.abs(rawDy) > touchSlop) gestureMoved = true;"
+new_movement_threshold = "                if (Math.hypot(rawDx, rawDy) > touchSlop) gestureMoved = true;"
+if old_movement_threshold in note:
+    note = note.replace(old_movement_threshold, new_movement_threshold, 1)
+    NOTE.write_text(note, encoding="utf-8")
+if new_movement_threshold not in note:
+    raise SystemExit("Radial touch-slop movement threshold was not applied.")
+
 math_source = '''package com.luoke.autopiano;
 
 /** Pure gesture math shared by NoteRollView and JVM regression tests. */
