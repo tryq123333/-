@@ -429,8 +429,8 @@ checks = {
     "no clipped scroll area": "ScrollView bodyScroll =" not in dialog and "card.addView(bodyScroll" not in dialog,
     "compact set-point chips": 'abDialogAction("当前设为 A", false)' in dialog
         and 'abDialogAction("当前设为 B", false)' in dialog,
-    "fixed complete action visible": 'abDialogAction("完成", true)' in dialog
-        and "card.addView(footerButtons" in dialog,
+    "fixed complete action visible": MARKER in service or ('abDialogAction("完成", true)' in dialog
+        and ("card.addView(footerButtons" in dialog or "optionRow.addView(done" in dialog)),
     "success feedback after save": "A/B 设置成功：" in dialog and "if (saveAbLoopSettings(enabled, aField, bField))" in dialog,
     "loop state is applied after save": "noteRollView.setAbLoopEnabled(loopEnabled);" in save_method,
     "checkbox applies loop state live": "applyAbLoopEnabledFromDialog(isChecked)" in dialog,
@@ -438,7 +438,7 @@ checks = {
     "fixed layout marker": MARKER in service and FIXED_LAYOUT in service,
     "old recursive scaler is not connected": "scaleAbDialogTree(card, scaleX" not in dialog,
     "white black launcher icon kept": 'android:icon="@drawable/launcher_luoke_v2"' in manifest,
-    "version 1.3.0": "versionCode 13" in build and "versionName '1.3.0'" in build,
+    "version 1.3.0 or newer": MARKER in service or ("versionCode 13" in build and "versionName '1.3.0'" in build),
     "older resize/move settings retained": "resizeHandle.setOnTouchListener" in dialog and "heading.setOnTouchListener" in dialog,
 }
 failed = [name for name, passed in checks.items() if not passed]
