@@ -285,8 +285,9 @@ checks = {
         and "private void applyAbLoopEnabledFromDialog(boolean loopEnabled)" in service,
     "loop checkbox updates NoteRollView": "noteRollView.setAbLoopEnabled(loopEnabled);" in service,
     "resize bounds are compact": "Math.max(dp(195), Math.min(Math.min(maxW, dp(255))" in dialog,
-    "earlier UI and app naming remain": "SONGLE_FADE_IN_NAME_AND_AB_DIALOG_ACTIONS_V2" in service
-        and 'android:icon="@drawable/launcher_luoke_v2"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8"),
+    "earlier UI and app naming remain": "ROLL_SINGLE_PERFORMANCE_REAL_ICONS_FADE_V3" in service
+        and 'android:icon="@drawable/launcher_luoke_v2"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
+        and "<string name=\"app_name\">奏乐</string>" in (ROOT / "app/src/main/res/values/strings.xml").read_text(encoding="utf-8"),
     "version 1.2.0": "versionCode 12" in BUILD.read_text(encoding="utf-8") and "versionName '1.2.0'" in BUILD.read_text(encoding="utf-8"),
 }
 failed = [name for name, passed in checks.items() if not passed]
