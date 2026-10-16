@@ -782,6 +782,9 @@ jobs:
       - name: Add note-by-note practice mode and key-position guides
         run: python .github/scripts/apply_practice_mode_v10.py
 
+      - name: Fix practice guide touch handoff to game keys
+        run: python .github/scripts/apply_practice_gesture_handoff_v11.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
