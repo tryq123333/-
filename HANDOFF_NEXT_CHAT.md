@@ -8,18 +8,20 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 当前归档 blob SHA：`aa0793702d10b6ee85aa7ee575f8c72b1bf9f413`
+- 最新源码归档 blob SHA：`aa0793702d10b6ee85aa7ee575f8c72b1bf9f413`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新已成功构建：Run #152，应用版本 `1.9.2` / `versionCode 21`
-  <https://github.com/tryq123333/-/actions/runs/38961536739>
-- Run #152 的工作流提交：`4c9503db6e02f59cd80566377bb6b864dcd7838d`
-- 最新源码归档同步后的主分支 HEAD：`c7ed063feeb8dcae343785921cff2de654d50ca4`
-- Run #152 已确认成功：V12 补丁步骤、Android `assembleDebug`、JVM `testDebugUnitTest`、APK 上传、源码 ZIP 打包/上传和源码同步全部 success。
-- Run #152 构建产物：APK artifact ID `12072064847`，source ZIP artifact ID `12073295650`。
-- 本地 APK：`/mnt/data/LuokeAutoPiano_1.9.2.apk`，108,658 bytes，SHA-256 `c832a041974a9ccaad53e758697353e9c17b9b4292a03ddeba96de2215eb69f1`。
-- 本地源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.2_source.zip`，115,649 bytes，SHA-256 `c0b0ab0af7fd2b890084265db50682f429fe01cfa24eb5c2d078dda2076b9280`。
-- 两个最终文件均已验证 ZIP 完整性；源码归档确认 `versionCode 21` / `versionName 1.9.2`，且含 V12 映射、等待线和触控队列修复。
-- 重要：构建与 JVM 测试通过不代表完成 Android 真机验证。真机结果必须在用户实际安装测试后更新。
+- 最新已成功功能构建：Run #152（V1.9.2），后续 Run #154 重新验证历史补丁兼容性；两个构建均成功。
+  - V1.9.2 功能构建：<https://github.com/tryq123333/-/actions/runs/38961536739>
+  - 兼容性重建：<https://github.com/tryq123333/-/actions/runs/38962528717>
+- 当前 App 版本：`1.9.2` / `versionCode 21`
+- Run #154 工作流提交：`9a2b815580c816e0de4a06211862474ef76c8dea`
+- Run #154 后的源码归档同步分支 HEAD：`1d9a9f7554ef9414699ab3dc8c7d3baf25c38107`
+- Run #154 已确认成功：旧 V11 补丁的 V12 兼容跳过、V12 补丁重复应用检查、Android `assembleDebug`、JVM `testDebugUnitTest`、APK 与源码 ZIP 上传和同步全部 success。
+- Run #154 构建产物：APK artifact ID `12072813938`，source ZIP artifact ID `12073531859`。
+- 本地 APK：`/mnt/data/LuokeAutoPiano_1.9.2.apk`，108,658 bytes，SHA-256 `21f77d0412a1658ad11dba7d4aad8104b62fb386d634b1aa9f927dc0da37fe20`。
+- 本地源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.2_source.zip`，115,649 bytes，SHA-256 `ce3f6b12b423cbc7d3573d9fcdae645751c1f5e73eed6cd2ac492b46b47a5507`。
+- 两个最终文件都已验证 ZIP 完整性。源码归档确认 `versionCode 21` / `versionName 1.9.2`，且含 V12 映射、停在线上等候 UI、串行触控队列与九键映射回归测试。
+- 重要：构建和 JVM 测试通过不代表已经完成 Android 真机验证。真机结果必须在用户实际安装测试后更新。
 
 ## 2. 项目是什么
 
@@ -325,3 +327,11 @@
 - Run #152 <https://github.com/tryq123333/-/actions/runs/38961536739> 成功。V12 应用步骤、Android APK 编译、JVM 单元测试、APK/source ZIP 上传及源码同步全部 success。工作流提交 `4c9503db6e02f59cd80566377bb6b864dcd7838d`，源码归档同步后 HEAD `c7ed063feeb8dcae343785921cff2de654d50ca4`。APK artifact ID `12072064847`；source ZIP artifact ID `12073295650`。
 - APK `/mnt/data/LuokeAutoPiano_1.9.2.apk` 为 108,658 bytes，SHA-256 `c832a041974a9ccaad53e758697353e9c17b9b4292a03ddeba96de2215eb69f1`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.2_source.zip` 为 115,649 bytes，SHA-256 `c0b0ab0af7fd2b890084265db50682f429fe01cfa24eb5c2d078dda2076b9280`。两份文件完整性检查通过。
 - 仍未在实际 Android 手机上完成本轮真机回归。安装 1.9.2 后应重点确认：① A2/E3/F3/G3/A3/B3/C4/D4/E4 各图案与游戏实际图案/音高对应，尤其对照截图中误配的 A3；② 练习时当前音符图案停在线中央，而不是偏在线右侧；③ 和弦逐个点击时已弹按键的图标变淡，其他键保持提示；④ 引导圈更大且相邻键仍可分别点击；⑤ 快速连续点击两个不同引导键，两次都应产生游戏声音，并在最后一键触控完成后才推进下一组。自动测试通过不等于手机实测通过。
+
+
+## 31. 2026-10-17 V1.9.2 构建兼容性复验：V11 补丁识别 V12 源码
+
+- Run #152 的 V1.9.2 功能构建已经通过；更新交接文档触发的后续重建 Run #153 曾失败，日志明确显示：`apply_practice_gesture_handoff_v11.py` 试图把旧 V11 逻辑补丁再次应用到已经包含 V12 队列实现的源码归档，因旧 overlay 集合锚点已被 V12 替换而中止。这个失败不是 Android 编译错误。
+- 已修正 `.github/scripts/apply_practice_gesture_handoff_v11.py`：如果当前 service 已包含 `PRACTICE_VISUAL_MAPPING_WAIT_QUEUE_V12`，旧 V11 补丁直接跳过，不再重写 V12 代码；随后工作流中的 V12 脚本继续负责确保版本号与 V12 状态正确。此逻辑避免从最新源码 ZIP 重建时非幂等的旧补丁再度阻塞。
+- 成功重建 Run #154：<https://github.com/tryq123333/-/actions/runs/38962528717>。V11 兼容步骤、V12 步骤、APK 编译、JVM 单元测试、产物上传及源码归档同步均 success。APK artifact ID `12072813938`；source artifact ID `12073531859`。新下载的 APK 与源码 ZIP 均通过完整性和 V12 内容检查。
+- 真机测试仍待用户确认：请安装 V1.9.2，检查九键图标与实际游戏按键映射、当前音符在渐淡/播放线位置等待、引导圈尺寸、快速连续点击是否都能产生声音，以及和弦中未完成提示是否保留。
