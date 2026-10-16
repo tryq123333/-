@@ -141,10 +141,12 @@ if MARKER not in service:
         service = service.replace("import android.accessibilityservice.AccessibilityService;",
                                   "import android.accessibilityservice.AccessibilityService;\nimport android.app.AlertDialog;", 1)
 
-    service = once(service,
-        "                @Override public void onToggleAbLoop() { toggleAbLoopEnabled(); }",
-        "                @Override public void onToggleAbLoop() { toggleAbLoopEnabled(); }\n                @Override public void onSpeedChange(int speedPercent) { changePlaybackSpeedFromNoteRoll(speedPercent); }",
-        "connect speed slider to playback controller")
+    speed_callback = "                @Override public void onSpeedChange(int speedPercent) { changePlaybackSpeedFromNoteRoll(speedPercent); }"
+    if speed_callback not in service:
+        service = once(service,
+            "                @Override public void onToggleAbLoop() { toggleAbLoopEnabled(); }",
+            "                @Override public void onToggleAbLoop() { toggleAbLoopEnabled(); }\n" + speed_callback,
+            "connect speed slider to playback controller")
 
     # Put each song's remove button alongside its title, without changing the title click selection.
     old_title = """            TextView item = new TextView(this);
@@ -282,22 +284,26 @@ if MARKER not in service:
     if "private void changePlaybackSpeedFromNoteRoll(" not in service:
         service = service.replace(speed_anchor, speed_helper + speed_anchor, 1)
 
-    service = service.replace(
-        "ROLL_REWIND_NEXT_TO_AB_V7 */",
-        "ROLL_REWIND_NEXT_TO_AB_V7 " + MARKER + " */",
-        1)
+    if MARKER not in service:
+        service = service.replace(
+            "public class MusicAccessibilityService extends AccessibilityService {",
+            "public class MusicAccessibilityService extends AccessibilityService { // " + MARKER,
+            1)
     SERVICE.write_text(service, encoding="utf-8")
 
     # The scheduler reads the live speed for the next note batch. Speed changes also bump the
     # seek version, so a wait already in progress exits and recalculates from the rebased cursor.
     service = SERVICE.read_text(encoding="utf-8")
-    service = once(service,
-        """                    index = firstNoteAtOrAfter(song, baseMicros);
-                    mainHandler.post(() -> {""",
-        """                    index = firstNoteAtOrAfter(song, baseMicros);
-                    speedPercent = Math.max(50, Math.min(200, activeSpeedPercent));
-                    mainHandler.post(() -> {""",
-        "refresh playback speed after a seek or speed adjustment")
+    speed_refresh_line = "                    speedPercent = Math.max(50, Math.min(200, activeSpeedPercent));"
+    scheduler_anchor = """                    index = firstNoteAtOrAfter(song, baseMicros);
+                    mainHandler.post(() -> {"""
+    if speed_refresh_line not in service and scheduler_anchor in service:
+        service = service.replace(scheduler_anchor,
+            """                    index = firstNoteAtOrAfter(song, baseMicros);
+    """ + speed_refresh_line + """
+                    mainHandler.post(() -> {""", 1)
+    elif speed_refresh_line not in service:
+        raise SystemExit("Cannot locate playback scheduler anchor for speed refresh.")
     SERVICE.write_text(service, encoding="utf-8")
 
 build = BUILD.read_text(encoding="utf-8")
