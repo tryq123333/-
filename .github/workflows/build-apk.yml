@@ -15,6 +15,36 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Fetch visual reference for game key symbols
+        uses: actions/checkout@v4
+        with:
+          repository: tryq123333/chat
+          ref: main
+          path: reference-chat
+          persist-credentials: false
+
+      - name: Prepare compact game-key reference preview
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image
+          source = Path("reference-chat/IMG_20261017_055118.jpg")
+          if not source.exists():
+              raise SystemExit("Missing expected game-key reference image in tryq123333/chat")
+          image = Image.open(source).convert("RGB")
+          image.thumbnail((1200, 1200))
+          out = Path("/tmp/game-key-reference.jpg")
+          image.save(out, "JPEG", quality=88)
+          print(f"Reference preview: {image.width}x{image.height}, {out.stat().st_size} bytes")
+          PY
+
+      - name: Upload game-key reference preview for visual inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-key-reference-preview
+          path: /tmp/game-key-reference.jpg
+          if-no-files-found: error
+
       - name: Expand Android source archive
         run: unzip -q LuokeAutoPiano.zip
 
