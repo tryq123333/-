@@ -499,31 +499,85 @@ jobs:
         run: python .github/scripts/apply_song_specific_roll_ui_v2.py
 
       - name: Use one 演奏 control, original game key icons and faded playhead
-        run: python .github/scripts/apply_roll_single_control_icons_fade_v3.py
+        run: |
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'ROLL_SINGLE_PERFORMANCE_REAL_ICONS_FADE_V3' "$NOTE_VIEW"; then
+            python .github/scripts/apply_roll_single_control_icons_fade_v3.py
+          else
+            echo "Single 演奏 control and original key icons already applied."
+          fi
 
       - name: Stabilize note-roll seek, icons, A/B sizing and stopped cursor
-        run: python .github/scripts/apply_roll_seek_icon_stability_v4.py
+        run: |
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'ROLL_SEEK_ICON_STABILITY_V4' "$NOTE_VIEW"; then
+            python .github/scripts/apply_roll_seek_icon_stability_v4.py
+          else
+            echo "Stable seek, icons and A/B sizing already applied."
+          fi
 
       - name: Apply full key medallions, staged note entrance and correct app name/icon
-        run: python .github/scripts/apply_roll_reference_icon_and_app_identity_v5.py
+        run: |
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'ROLL_REFERENCE_ICON_ANIMATION_V5' "$NOTE_VIEW"; then
+            python .github/scripts/apply_roll_reference_icon_and_app_identity_v5.py
+          else
+            echo "Reference key images and app identity already applied."
+          fi
 
       - name: Finalize note-roll controls, reserved note entry, seek frame guard and launcher identity
-        run: python .github/scripts/apply_roll_final_controls_seek_launcher_v6.py
+        run: |
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'ROLL_FINAL_CONTROLS_SEEK_LAUNCHER_V6' "$NOTE_VIEW"; then
+            python .github/scripts/apply_roll_final_controls_seek_launcher_v6.py
+          else
+            echo "Final controls, seek guard and launcher identity already applied."
+          fi
 
       - name: Restore scroll-note rewind beside A/B
-        run: python .github/scripts/apply_roll_rewind_next_to_ab_v7.py
+        run: |
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'ROLL_REWIND_NEXT_TO_AB_V7' "$NOTE_VIEW"; then
+            python .github/scripts/apply_roll_rewind_next_to_ab_v7.py
+          else
+            echo "Scroll-note rewind beside A/B already applied."
+          fi
 
       - name: Add live search to imported songs
-        run: python .github/scripts/apply_song_picker_live_search_v1.py
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          if ! grep -q 'SONG_PICKER_LIVE_SEARCH_V1' "$SERVICE"; then
+            python .github/scripts/apply_song_picker_live_search_v1.py
+          else
+            echo "Song-picker live search already applied."
+          fi
 
       - name: Add multi-select MIDI batch import
-        run: python .github/scripts/apply_batch_midi_import_v1.py
+        run: |
+          MAIN_ACTIVITY=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MainActivity.java
+          if ! grep -q 'BATCH_MIDI_IMPORT_V1' "$MAIN_ACTIVITY"; then
+            python .github/scripts/apply_batch_midi_import_v1.py
+          else
+            echo "Multi-select MIDI import already applied."
+          fi
 
       - name: Add roll speed adjustment and remove imported songs
-        run: python .github/scripts/apply_roll_speed_and_song_removal_v1.py
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          if ! grep -q 'ROLL_SPEED_CONTROL_AND_SONG_REMOVAL_V1' "$SERVICE"; then
+            python .github/scripts/apply_roll_speed_and_song_removal_v1.py
+          else
+            echo "Roll speed control and song removal already applied."
+          fi
 
-      - name: Sync roll collapse and restore song picker position
-        run: python .github/scripts/apply_panel_roll_sync_and_song_list_restore_v1.py
+      - name: Keep note-roll independently controllable and restore song picker position
+        run: |
+          SERVICE=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java
+          if ! grep -q 'SONG_LIST_SCROLL_RESTORE_V2' "$SERVICE"; then
+            python .github/scripts/apply_panel_roll_sync_and_song_list_restore_v1.py
+          else
+            echo "Independent note-roll controls and song-list scroll restore already applied."
+          fi
 
       - name: Auto-size the expanded music control panel on state changes
         run: |
