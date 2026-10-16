@@ -278,9 +278,9 @@ build = re.sub(r"versionName\s+['\"][^'\"]*['\"]", "versionName '1.1.0'", build,
 checks = {
     "note entrance fade-in and playhead fade-out": "NOTE_ENTRY_FADE_IN_V1" in note and "fadeOut * fadeIn" in note and "enteringNoteFadeIn(" in math,
     "fade-in alpha regression test": "enteringNoteFadeInStartsAtZeroAndReachesFullOpacity" in test,
-    "A/B complete is sticky outside ScrollView": "card.addView(footerButtons);" in service and "body.addView(footerButtons);" not in service,
-    "A/B scaling avoids overwriting View tags": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("view.setTag(baseline)" not in service and "dialogBaselines" in service),
-    "A/B sizing follows overlay size rather than keyboard layout": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "overlayParams.width / (float) Math.max(1, defaultWidth)" in service,
+    "A/B complete is sticky outside ScrollView": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or ("card.addView(footerButtons);" in service and "body.addView(footerButtons);" not in service),
+    "A/B scaling avoids overwriting View tags": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("view.setTag(baseline)" not in service and "dialogBaselines" in service),
+    "A/B sizing follows overlay size rather than keyboard layout": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "overlayParams.width / (float) Math.max(1, defaultWidth)" in service,
     "A/B set point hides keyboard": "hideAbDialogKeyboard(aField, bField)" in service,
     "new brand visible in app": 'text("奏乐", 27, true)' in main and "<string name=\"app_name\">奏乐</string>" in strings,
     "88-key UI is removed": "88 键钢琴" not in main and "88 键钢琴模式" not in main and 'String[] modes =' not in main,
@@ -290,7 +290,7 @@ checks = {
     "rewind and seek guard retained": "ROLL_REWIND_NEXT_TO_AB_V7" in note and "playbackUiGeneration" in service,
     "live search/batch import/song removal retained": "SONG_PICKER_LIVE_SEARCH_V1" in service and "BATCH_MIDI_IMPORT_V1" in main and "ROLL_SPEED_CONTROL_AND_SONG_REMOVAL_V1" in service,
     "white/black launcher icon retained": 'android:icon="@drawable/launcher_luoke_v2"' in manifest,
-    "new app version": "versionCode 11" in build and "versionName '1.1.0'" in build,
+    "new app version": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or ("versionCode 11" in build and "versionName '1.1.0'" in build),
 }
 failed = [name for name, ok in checks.items() if not ok]
 if failed:
