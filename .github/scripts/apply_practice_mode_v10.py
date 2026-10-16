@@ -161,7 +161,7 @@ if MARKER not in service:
         else updatePracticeKeyTargetOverlays();
         synchronized (playbackLock) { playbackLock.notifyAll(); }
         if (showFeedback) toast(enabled
-                ? "练习模式已开启：音符停在白线处，点击对应游戏键继续。"
+                ? "练习模式已开启：音符停在白线处；和弦可逐个点击对应键。"
                 : "练习模式已关闭：恢复正常滚动与自动演奏。");
     }
 
@@ -465,7 +465,7 @@ public class PracticeNoteGateTest {
         assertTrue(gate.isComplete());
     }
 
-    @Test public void chordRequiresEveryDistinctPitch() {
+    @Test public void chordCanBeTappedOneKeyAtATimeInAnyOrder() {
         PracticeNoteGate gate = new PracticeNoteGate();
         gate.begin(Arrays.asList(60, 64, 67, 60));
         assertEquals(new LinkedHashSet<>(Arrays.asList(60, 64, 67)), gate.remaining());
