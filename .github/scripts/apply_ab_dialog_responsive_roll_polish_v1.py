@@ -264,8 +264,8 @@ if not m:
     raise SystemExit("Cannot find application versionCode.")
 if int(m.group(1)) < 10:
     build = build[:m.start(1)] + "10" + build[m.end(1):]
-build = re.sub(r"versionName\s+['\"][^'\"]*['\"]",
-               "versionName '1.0.0'", build, count=1)
+    build = re.sub(r"versionName\s+['\"][^'\"]*['\"]",
+                   "versionName '1.0.0'", build, count=1)
 BUILD.write_text(build, encoding="utf-8")
 
 # 4. Guard against the earlier features being accidentally lost in future source rebuilds.
@@ -292,7 +292,7 @@ checks = {
     "live song search and scroll restore": "SONG_PICKER_LIVE_SEARCH_V1" in service and "SONG_LIST_SCROLL_RESTORE_V2" in service,
     "roll speed and remove songs": "ROLL_SPEED_CONTROL_AND_SONG_REMOVAL_V1" in note and "ROLL_SPEED_CONTROL_AND_SONG_REMOVAL_V1" in service,
     "main floating panel auto height": "CONTROL_PANEL_CONTENT_SIZING_V1" in service and "syncControlPanelHeightToContent()" in service,
-    "version 1.0.0": "versionCode 10" in BUILD.read_text(encoding="utf-8") and "versionName '1.0.0'" in BUILD.read_text(encoding="utf-8"),
+    "version 1.0.0 or newer": int(re.search(r"versionCode\s+(\d+)", BUILD.read_text(encoding="utf-8")).group(1)) >= 10,
 }
 failed = [label for label, ok in checks.items() if not ok]
 if failed:
