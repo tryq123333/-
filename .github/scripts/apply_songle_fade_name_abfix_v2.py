@@ -278,7 +278,7 @@ build = re.sub(r"versionName\s+['\"][^'\"]*['\"]", "versionName '1.1.0'", build,
 checks = {
     "note entrance fade-in and playhead fade-out": "NOTE_ENTRY_FADE_IN_V1" in note and "fadeOut * fadeIn" in note and "enteringNoteFadeIn(" in math,
     "fade-in alpha regression test": "enteringNoteFadeInStartsAtZeroAndReachesFullOpacity" in test,
-    "A/B complete is sticky outside ScrollView": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or ("card.addView(footerButtons);" in service and "body.addView(footerButtons);" not in service),
+    "A/B complete is sticky outside ScrollView": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("card.addView(footerButtons);" in service and "body.addView(footerButtons);" not in service),
     "A/B scaling avoids overwriting View tags": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("view.setTag(baseline)" not in service and "dialogBaselines" in service),
     "A/B sizing follows overlay size rather than keyboard layout": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "overlayParams.width / (float) Math.max(1, defaultWidth)" in service,
     "A/B set point hides keyboard": "hideAbDialogKeyboard(aField, bField)" in service,
