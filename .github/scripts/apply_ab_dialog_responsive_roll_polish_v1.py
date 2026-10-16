@@ -192,10 +192,16 @@ if "ROLL_BOTTOM_TIME_AND_SUBTLE_FRAME_V1" not in note:
         ("paint.setColor(0xffedf7f4);", "paint.setColor(0xbfdce7e4);"),
         ("paint.setColor(0xff4c8d80);", "paint.setColor(0x887da59a);"),
     ]
+    speed_start = note.find("    private void drawSpeedControl(")
+    speed_end = note.find("    private int speedFromX(", speed_start)
+    if speed_start < 0 or speed_end < 0:
+        raise SystemExit("Cannot isolate speed-control drawing block.")
+    speed_block = note[speed_start:speed_end]
     for old, new in replacements:
-        if old not in note:
+        if old not in speed_block:
             raise SystemExit("Speed-control color anchor missing: " + old)
-        note = note.replace(old, new, 1)
+        speed_block = speed_block.replace(old, new, 1)
+    note = note[:speed_start] + speed_block + note[speed_end:]
 
     border_helper = r'''    private void drawSubtleWindowBorder(Canvas canvas, float w, float h, float density) {
         paint.setStyle(Paint.Style.STROKE);
