@@ -771,6 +771,7 @@ jobs:
       - name: Fix A/B touch bounds, uniformly resize controls and put Done first
         run: python .github/scripts/apply_ab_dialog_true_bounds_order_v6.py
 
+      # Ensure action buttons deliver native clicks and never silently close on an outside tap.
       - name: Restore native A/B button clicks and prevent silent outside dismissal
         run: python .github/scripts/apply_ab_dialog_no_silent_dismiss_v7.py
 
