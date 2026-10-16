@@ -8,17 +8,18 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 最新源码归档 blob SHA：`4a1576c0cb79430dc16d11e093005a366ee91e13`
+- 最新源码归档 blob SHA：`7739a203bc154ad527da1215c6eba8e41cb20a90`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新完整自动构建与兼容性复验：Run #155，应用版本 `1.9.2` / `versionCode 21`
-  <https://github.com/tryq123333/-/actions/runs/38970882167>
-- #155 验证通过：V11 识别 V12 源码并跳过旧补丁、V12 状态/映射补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/source ZIP 上传及源码同步均 success。
-- Run #155 归档同步提交：`5fb812169f59217719763fa2867f02c677176817`。
-- Run #155 产物：APK artifact ID `12077385962`；source ZIP artifact ID `12077111197`。
-- 最终 APK：`/mnt/data/LuokeAutoPiano_1.9.2.apk`，108,658 bytes，SHA-256 `05d907ded63e789f0622c4ee1d2f4cb9883888165bdf4a8a0ff18fef717f90e2`。
-- 最终源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.2_source.zip`，115,649 bytes，SHA-256 `c5a42e951d36f3170baf55c54fc88b82d3151bf65a4d222820a5a4273cb0c7bf`。
-- 两个交付文件均已验证 ZIP 完整性。源码归档确认 `versionCode 21` / `versionName 1.9.2`、V12 九键图标映射、播放线等待状态和串行触控队列。
-- 重要：构建与 JVM 测试通过不代表 Android 真机验证。必须由用户实际安装测试后再写“真机通过”。
+- 最新成功构建：Run #158，应用版本 `1.9.3` / `versionCode 22`
+  <https://github.com/tryq123333/-/actions/runs/38973902955>
+- Run #158 工作流提交：`6e2b7e0a284784695c740c178babe8be03f77a51`
+- 源码归档同步后 main HEAD：`05de3ef8ad735c9ef5e3b1efe40f31221835b1ad`
+- Run #158 已确认通过：V11/V12/V13 补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/源码 ZIP 上传与源码同步均 success。
+- Run #158 产物：APK artifact ID `12078450889`，source ZIP artifact ID `12078565812`。
+- 本地交付 APK：`/mnt/data/LuokeAutoPiano_1.9.3.apk`，108,666 bytes，SHA-256 `d579f48affa347e5d31625674dda85ef4e07bc679e4d60263c23f3cdb57cbb96`。
+- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.3_source.zip`，115,776 bytes，SHA-256 `484ad55a27d49ddeace92f053ffcdaa764d16bc04aad6711118365e5684b11dc`。
+- 两个最终文件均已检查 ZIP 完整性；源码 ZIP 已核对版本号与正确映射表。
+- 重要：构建/JVM 测试通过不代表已完成 Android 真机验证。真机结果必须由用户实际安装测试后再记录。
 
 ## 2. 项目是什么
 
@@ -341,3 +342,13 @@
 - Run #155 的实际交付 APK 已解出为 `/mnt/data/LuokeAutoPiano_1.9.2.apk`（108,658 bytes，SHA-256 `05d907ded63e789f0622c4ee1d2f4cb9883888165bdf4a8a0ff18fef717f90e2`）；源码 ZIP 为 `/mnt/data/LuokeAutoPiano_1.9.2_source.zip`（115,649 bytes，SHA-256 `c5a42e951d36f3170baf55c54fc88b82d3151bf65a4d222820a5a4273cb0c7bf`）。两个文件已重新通过 ZIP 完整性检查；源码内再次检查到版本 1.9.2/code 21、V12 串行 tap queue、wait-line 状态和九键 atlas mapping 测试。
 - Run #153 曾因旧 V11 脚本无法识别 V12 已替换的触控代码而失败；V11 脚本新增检测 V12 marker 的短路跳过后，Run #154 和 #155 已确认成功，因此从最新源码归档重复构建不应再撞到这个历史兼容性错误。
 - 真机验证尚未完成。需要用户安装 V1.9.2 验证：① 每个谱面图标与真实九键对应；② 当前练习音符稳定停在渐淡/播放线；③ 引导圈更大但不会遮挡相邻键导致误触；④ 快速连点两颗引导时都能听到声音；⑤ 和弦中只消除刚点的圈，其他圈保持显示，并在最后一个正确触控后才推进。
+
+## 33. 2026-10-17 V1.9.3：纠正高低音点位与九键音色映射 V13
+
+- 用户指出 1.9.2 中滚动谱面显示的按键图案仍与游戏内实际键不对应，且高音图标应有上点、低音图标应有下点，中音无八度点。用户提供参考仓库 <https://github.com/tryq123333/chat>，其中能列出参考图片 `IMG_20261017_055118.jpg`。当前连接读取该仓库二进制图片失败，尝试用当前仓库的 GitHub Actions token checkout 也因权限/仓库不可见而返回 Repository not found；临时 checkout 步骤已移除，避免影响正式构建。因此不要声称已经对该仓库图片做逐像素核验；本轮映射依据是当前源码的 `note_key_atlas.webp` 与用户在对话中提供的游戏实机截图。
+- 定位到 V12 映射表仍错配：旧映射 `{8,0,1,3,2,4,5,6,7}` 错把中音 E3/F3/A3 指向上点格子，并把高音 C4/D4/E4 指向无点格子。V13 改为 `{8,3,4,5,6,7,0,1,2}`，按音域分别映射：A2=低音 6 → cell 8（点在下）；E3/F3/G3/A3/B3=中音 3–7 → cells 3–7（无点）；C4/D4/E4=高音 1–3 → cells 0–2（点在上）。
+- 新补丁 `.github/scripts/apply_practice_octave_dots_v13.py` 在 V12 补丁之后执行，写入明确的八度点位说明；更新 `InstrumentLayoutTest.nineKeyPitchIconsMapToCorrectGameAtlasCells` 逐个断言九个音符和图集 cell 的对应关系，并明确测试高音上点和低音下点。普通谱面图标由最大 16dp 微调到 18dp，练习中当前待弹图标由 18dp 增至 20dp，以提高点位可见性；引导圈的 46dp 触控区、串行手势队列以及和弦逐键等待逻辑均保留。
+- 已同步修正 V12 构建脚本：生成新源码时使用正确映射，且审计同时兼容尚未应用 V13 的旧 V12 映射和已应用 V13 的映射，避免增量重建时 V12 步骤提前失败。此前临时添加的对 chat 仓库做 checkout/预览的诊断步骤已从 build workflow 移除。
+- Run #158 成功：<https://github.com/tryq123333/-/actions/runs/38973902955>。V12 审计、V13 补丁、APK 编译、JVM 单元测试、APK/source ZIP 上传和源码同步均 success。工作流提交 `6e2b7e0a284784695c740c178babe8be03f77a51`，同步 main HEAD `05de3ef8ad735c9ef5e3b1efe40f31221835b1ad`。APK artifact ID `12078450889`；source ZIP artifact ID `12078565812`。
+- APK `/mnt/data/LuokeAutoPiano_1.9.3.apk` 为 108,666 bytes，SHA-256 `d579f48affa347e5d31625674dda85ef4e07bc679e4d60263c23f3cdb57cbb96`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.3_source.zip` 为 115,776 bytes，SHA-256 `484ad55a27d49ddeace92f053ffcdaa764d16bc04aad6711118365e5684b11dc`。两份文件已通过 ZIP 完整性检查；源码已核对 `versionCode 22` / `versionName 1.9.3` 和 V13 映射表。
+- 仍需手机实测：更新到 1.9.3 后检查 A2 低音显示下点、E3–B3 中音无点、C4–E4 高音上点；确认九键图案与实际游戏位置一一对应，特别是高音 1/2/3 与低音 6。若用户觉得图案形状仍不对应，需请用户把 chat 仓库那张原始参考图直接上传到对话，以便实际视觉比对，不能猜测继续改图集映射。
