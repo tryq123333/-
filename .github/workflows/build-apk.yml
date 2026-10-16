@@ -753,6 +753,9 @@ jobs:
       - name: Add note entrance fade-in, rename to 奏乐, remove 88-key UI and repair A/B actions
         run: python .github/scripts/apply_songle_fade_name_abfix_v2.py
 
+      - name: Fix A/B dialog visibility, compact controls and sync loop state
+        run: python .github/scripts/apply_ab_loop_dialog_sync_compact_v3.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
