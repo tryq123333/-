@@ -488,7 +488,12 @@ jobs:
 
       - name: Apply requested note fade, progress opacity, app name and music icon
         run: |
-          python .github/scripts/apply_ab_loop_branding_v3.py
+          NOTE_VIEW=LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/NoteRollView.java
+          if ! grep -q 'AB_LOOP_FADE_BRAND_RESET_V3' "$NOTE_VIEW"; then
+            python .github/scripts/apply_ab_loop_branding_v3.py
+          else
+            echo "Note fading, A/B reset and branding refinement already applied."
+          fi
 
       - name: Apply note-roll play, rewind and gesture safeguards
         run: |
