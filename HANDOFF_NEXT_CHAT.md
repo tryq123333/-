@@ -193,3 +193,11 @@
 - 曲目列表每首歌标题行右侧新增 `移除` 按钮。操作有二次确认，删除的仅是应用私有曲库中的导入副本（包括旧版 current_song.mid 条目），不会删除下载目录原件。同步清理该曲目的显示标签和独立移调偏好；若移除的是当前选曲，会先停止播放、清空当前引用和移调/AB 状态，并关闭谱面浮窗，避免继续引用被删文件。
 - 仍需手机真机验证：小窗口下滑杆能否易于操作、播放中调速后是否流畅衔接；在曲目列表移除非当前曲目、当前曲目以及最后一首曲目时，确认删除确认框、曲目列表和谱面状态都正常。
 
+## 17. 2026-10-16 修正主悬浮控制小窗随播放/暂停状态调整尺寸
+
+- 用户通过两张截图明确指出：问题是左下方“音乐图标展开后的初始主控制悬浮窗”，不是滚动音符谱面窗口。播放/暂停及谱面开关导致内部可见控件变化时，主控制窗的外层尺寸/底板没有跟着变化。
+- 修正已合入工作流 `.github/workflows/build-apk.yml`，提交 `607103e775378519620dd5bbb5f733189ec10610`。修复步骤 `Auto-size the expanded music control panel on state changes` 在构建时修改 `MusicAccessibilityService.java`，使用 `syncControlPanelHeightToContent()` 在主面板内容状态变化时重设 `controlParams.height = WRAP_CONTENT`，并在调整后把窗口纵向位置限制在屏幕内。对旧版保存的固定面板高度做一次迁移清理，保留宽度、移动与手动调整能力。
+- 明确撤掉了错误尝试的 NoteRoll/滚动谱面高度适配：最终源码不再含 `syncNoteRollWindowToPlaybackState`、`noteRollBaseHeightPx` 或 `playbackOverlayHeight()`；滚动谱面仍独立显示/关闭，不与主控制窗收起/展开联动。曲目列表滚动位置恢复逻辑也保留。
+- 为避免源码归档已经应用补丁时重复运行导致失败，工作流中的 V3–V7 音符补丁、曲目实时搜索、批量导入、速度/移除、曲目滚动位置等步骤均增加已应用标记检测，已存在时跳过而不是重复打补丁。
+- 成功构建 Run #117：https://github.com/tryq123333/-/actions/runs/38829183394，提交 `607103e775378519620dd5bbb5f733189ec10610`。APK Build、JVM tests、APK 上传、源码 ZIP 打包/上传、源码同步全部 success。APK artifact ID `12016107249`；source ZIP artifact ID `12016491816`。应用版本 `versionCode 9` / `versionName 0.9.0`。APK 已保存到 `/mnt/data/LuokeAutoPiano.apk`，大小 93,794 字节，ZIP 完整性检查通过；确认包含 `classes.dex`、`resources.arsc` 和 `note_key_atlas`。
+- 仍未做 Android 真机 UI 回归。手机上优先打开主音乐图标的小窗，分别检查未播放→播放、播放→暂停、谱面打开/关闭几种状态下，底板高度是否紧贴当前可见按钮/内容、没有多余空白或裁切；确认滚动谱面能独立开关且高度保持用户设定。若边框仍未跟随某个特定状态，需按该状态再检查状态刷新函数是否被调用，不要改成固定 124/148dp 的谱面高度逻辑。
