@@ -8,16 +8,17 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 当前归档 blob SHA：`b238a04416a2d55028ee6014e9b66311e3698990`
+- 当前归档 blob SHA：`bb9d7b8ef0c31fb82b195b2a4137f92c9b14a2d3`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最近一次已成功构建：Run #68
-  <https://github.com/tryq123333/-/actions/runs/38666732178>
-- Run #68 对应提交：`8564dc517df51855145e7649a0f5b65516cfa231`
-- 工作流最后同步源码后的主分支 HEAD：`6d0cf51cf6615084ef8419e87644a71f644e7d79`（`Sync seekable music overlay source [skip ci]`）
-- Run #68 已确认成功：Android `assembleDebug`、`testDebugUnitTest`、APK 上传、源码 ZIP 打包/上传、源码同步回主分支均为 success。
-- Run #68 构建产物：`LuokeAutoPiano-debug-apk`（artifact ID `11942190748`）和 `LuokeAutoPiano-source-zip`（artifact ID `11941311672`）。从上述 Actions 页面打开 Artifacts 即可下载。
-
-重要：构建成功与 JVM 单元测试通过并不等于已经在用户手机上完成真机测试。请不要宣称已在手机里实测，除非之后真的做了。
+- 最新已成功构建：Run #149，应用版本 `1.9.1` / `versionCode 20`
+  <https://github.com/tryq123333/-/actions/runs/38954828385>
+- Run #149 的构建触发提交：`20e0ab73f56f644fb925423b4b851a77968e5ca0`
+- 最新源码归档同步后的主分支 HEAD：`bbc23bed367dde3d4fa400b1412b9b776d1849b1`（`Sync seekable music overlay source [skip ci]`）
+- Run #149 已确认成功：练习引导触控转发补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK 上传、源码 ZIP 打包/上传和源码同步全部 success。
+- Run #149 构建产物：APK artifact ID `12069472430`，source ZIP artifact ID `12070111784`。工作流链接的 Artifacts 可作为备用下载入口。
+- 本地交付 APK：`/mnt/data/LuokeAutoPiano.apk`，106,630 bytes，SHA-256 `5720745611cf5d54eb0c83c3ee370cc5d3df05e11f59504661cdf82a128d6fdd`。
+- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano.zip`，114,248 bytes，SHA-256 `1dfe3dbd109585da326fe9e41cd5860fe26efedab86e26d947ce1669c2dcff41`。
+- 重要：构建成功和 JVM 单元测试通过不代表已经完成 Android 真机验证。只有实际在手机上测试后才可记作真机通过。
 
 ## 2. 项目是什么
 
@@ -297,3 +298,15 @@
 - 新增 `PracticeNoteGate.java` / `PracticeNoteGateTest.java`，覆盖单音精确命中、和弦逐键/任意顺序点击、重复音只计一次、错键不放行及清空等待状态。
 - GitHub Actions Run #146 成功：<https://github.com/tryq123333/-/actions/runs/38948663022>。练习功能审计、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/源码 ZIP 上传和源码同步全部 success。构建提交 `bf31305345dd02c4bf63a6b25d52d31aa88ea4ed`；自动同步主分支提交 `02201d5046ce6129e0fa68e55b788c1cb6349fcc`。APK artifact ID `12067228757`，文件 105,734 bytes，SHA-256 `9419d1f838a285e0feda4cc137829f6726e6d221859a44d10d7e7b13034265c0`。源码 ZIP artifact ID `12066833549`，文件 113,631 bytes，SHA-256 `07e59a56103dedfcfe9c66f14dbdbe3667cad6f3dd3e0db2f1f8b8aab497d4db`。本轮两个下载文件都通过 ZIP 完整性检查。
 - 重要限制：Run #146 的代码审计、Android 构建、JVM 单元测试与打包/同步均通过，但没有自动真机环境，暂不能声称用户手机上已完成验证。真机重点测：① 正常播放时“练习”关闭，音符继续自动演奏；② 开启后每个可触发音符停在白线处，并且只点对应的高亮游戏键才继续；③ 和弦可按任意顺序逐键点击，无需同时按、重复同音只需一次；④ 中途关闭练习、暂停、seek、停止、隐藏谱面后应恢复/清除正确状态，键位引导不可残留。
+
+
+## 29. 2026-10-17 V1.9.1：练习引导触控窗口移除时序优化 V11
+
+- 用户实测 V1.9.0 后反馈：点游戏按键位置的引导圈，没有触发游戏里的实际按键。用户明确说明：和弦有多个引导圈时，不要点击一个后清掉全部引导圈；应保留其他提示，只处理当前点击目标。
+- 新构建补丁 `.github/scripts/apply_practice_gesture_handoff_v11.py`，工作流在 V10 `apply_practice_mode_v10.py` 之后运行；标记为 `PRACTICE_GESTURE_WINDOW_HANDOFF_V11`。它保留原有校准坐标和 `dispatchGesture()`，不重做九键校准、不改变音符门控算法。
+- 用户点击其中一个提示圈后，只移除这个 pitch 对应的 `TYPE_ACCESSIBILITY_OVERLAY` 窗口；其他和弦提示圈保持可见。为防止悬浮窗移除尚未在系统触摸命中状态中生效就立刻注入点击，添加约 50ms 延迟，然后再向原校准坐标发送同样的短点击手势。
+- 新增 `practiceTapInFlightPitches`，等待触控转发的音高暂不重建提示圈，因此即使中间触发一次 overlay 刷新，也不会在游戏手势注入前把当前圈放回去。其余未点击音高仍留在引导集合里并保持显示。
+- 新增 `practiceGestureGeneration`：每一组新音符开始及清除引导时都会更新代数。延迟队列/手势回调必须确认目标音高仍属当前组、练习仍开启且代数匹配，才会放行当前音符，避免停止、seek、关闭练习或更换音符组后出现过期触控。系统拒绝/取消手势时会恢复仍应显示的引导并提示重试；手势正常完成后才从待练习集合删除该音。
+- 版本升级至 `1.9.1` / `versionCode 20`，避免安装时与当前 `1.9.0` 同版本号混淆。Run #149 <https://github.com/tryq123333/-/actions/runs/38954828385> 成功。构建前 V11 补丁步骤、Android APK 编译、JVM 单元测试、APK/source ZIP 上传、源码同步全部 success。构建提交 `20e0ab73f56f644fb925423b4b851a77968e5ca0`；源码归档同步提交 `bbc23bed367dde3d4fa400b1412b9b776d1849b1`。APK artifact ID `12069472430`；source ZIP artifact ID `12070111784`。
+- 最终 APK `/mnt/data/LuokeAutoPiano.apk`，106,630 bytes，SHA-256 `5720745611cf5d54eb0c83c3ee370cc5d3df05e11f59504661cdf82a128d6fdd`；源码 ZIP `/mnt/data/LuokeAutoPiano.zip`，114,248 bytes，SHA-256 `1dfe3dbd109585da326fe9e41cd5860fe26efedab86e26d947ce1669c2dcff41`。源码 ZIP 完整性测试通过，已确认其中版本号为 1.9.1/20 且包含 V11 触控交接代码。APK artifact 外层 ZIP 中的 APK 已解出供直接安装。
+- 仍需用户手机回归：在练习模式中遇到和弦，观察多个引导圈同时出现；逐个按任意顺序点其中一个，确认只让当前圈暂时消失，其他圈仍在，游戏对应键实际触发；完成一键后新的引导及时显示；取消手势或中途关闭练习/seek/停止时不残留旧圈、不误触发旧音。50ms 是本轮用于跨过系统悬浮窗触控层级更新时间的保守值，尚未通过实体 Android 设备验证；如果仍不触发，应进一步记录手势回调及游戏响应，而不是直接重校准。
