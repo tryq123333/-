@@ -525,6 +525,9 @@ jobs:
       - name: Sync roll collapse and restore song picker position
         run: python .github/scripts/apply_panel_roll_sync_and_song_list_restore_v1.py
 
+      - name: Adapt note-roll window to playing/paused state
+        run: python .github/scripts/apply_note_roll_playback_adaptive_size_v1.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
