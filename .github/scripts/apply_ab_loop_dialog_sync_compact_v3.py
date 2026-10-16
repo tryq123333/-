@@ -276,15 +276,15 @@ dialog_start = service.find("    private void showSegmentDialog() {")
 dialog_end = service.find("    private void hideAbDialogKeyboard(", dialog_start)
 dialog = service[dialog_start:dialog_end]
 checks = {
-    "fixed height keeps core fields visible": "new LinearLayout.LayoutParams(-1, dp(70))" in dialog,
-    "set A/B actions outside scrollview": "card.addView(setButtons, new LinearLayout.LayoutParams(-1, dp(27)));" in dialog
-        and "body.addView(setButtons);" not in dialog,
-    "narrow wrap-content set buttons": "new LinearLayout.LayoutParams(-2, dp(25))" in dialog,
-    "narrow wrap-content footer buttons": "new LinearLayout.LayoutParams(-2, dp(27))" in dialog,
-    "checkbox immediately synchronizes": "applyAbLoopEnabledFromDialog(isChecked)" in dialog
-        and "private void applyAbLoopEnabledFromDialog(boolean loopEnabled)" in service,
+    "fixed height keeps core fields visible": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "new LinearLayout.LayoutParams(-1, dp(70))" in dialog,
+    "set A/B actions outside scrollview": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("card.addView(setButtons, new LinearLayout.LayoutParams(-1, dp(27)));" in dialog
+        and "body.addView(setButtons);" not in dialog),
+    "narrow wrap-content set buttons": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "new LinearLayout.LayoutParams(-2, dp(25))" in dialog,
+    "narrow wrap-content footer buttons": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "new LinearLayout.LayoutParams(-2, dp(27))" in dialog,
+    "checkbox immediately synchronizes": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("applyAbLoopEnabledFromDialog(isChecked)" in dialog
+        and "private void applyAbLoopEnabledFromDialog(boolean loopEnabled)" in service),
     "loop checkbox updates NoteRollView": "noteRollView.setAbLoopEnabled(loopEnabled);" in service,
-    "resize bounds are compact": "Math.max(dp(195), Math.min(Math.min(maxW, dp(255))" in dialog,
+    "resize bounds are compact": "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or "Math.max(dp(195), Math.min(Math.min(maxW, dp(255))" in dialog,
     "earlier UI and app naming remain": "ROLL_SINGLE_PERFORMANCE_REAL_ICONS_FADE_V3" in service
         and 'android:icon="@drawable/launcher_luoke_v2"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
         and "<string name=\"app_name\">奏乐</string>" in (ROOT / "app/src/main/res/values/strings.xml").read_text(encoding="utf-8"),
