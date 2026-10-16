@@ -8,17 +8,18 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 当前归档 blob SHA：`bb9d7b8ef0c31fb82b195b2a4137f92c9b14a2d3`
+- 当前归档 blob SHA：`aa0793702d10b6ee85aa7ee575f8c72b1bf9f413`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新已成功构建：Run #149，应用版本 `1.9.1` / `versionCode 20`
-  <https://github.com/tryq123333/-/actions/runs/38954828385>
-- Run #149 的构建触发提交：`20e0ab73f56f644fb925423b4b851a77968e5ca0`
-- 最新源码归档同步后的主分支 HEAD：`bbc23bed367dde3d4fa400b1412b9b776d1849b1`（`Sync seekable music overlay source [skip ci]`）
-- Run #149 已确认成功：练习引导触控转发补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK 上传、源码 ZIP 打包/上传和源码同步全部 success。
-- Run #149 构建产物：APK artifact ID `12069472430`，source ZIP artifact ID `12070111784`。工作流链接的 Artifacts 可作为备用下载入口。
-- 本地交付 APK：`/mnt/data/LuokeAutoPiano.apk`，106,630 bytes，SHA-256 `5720745611cf5d54eb0c83c3ee370cc5d3df05e11f59504661cdf82a128d6fdd`。
-- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano.zip`，114,248 bytes，SHA-256 `1dfe3dbd109585da326fe9e41cd5860fe26efedab86e26d947ce1669c2dcff41`。
-- 重要：构建成功和 JVM 单元测试通过不代表已经完成 Android 真机验证。只有实际在手机上测试后才可记作真机通过。
+- 最新已成功构建：Run #152，应用版本 `1.9.2` / `versionCode 21`
+  <https://github.com/tryq123333/-/actions/runs/38961536739>
+- Run #152 的工作流提交：`4c9503db6e02f59cd80566377bb6b864dcd7838d`
+- 最新源码归档同步后的主分支 HEAD：`c7ed063feeb8dcae343785921cff2de654d50ca4`
+- Run #152 已确认成功：V12 补丁步骤、Android `assembleDebug`、JVM `testDebugUnitTest`、APK 上传、源码 ZIP 打包/上传和源码同步全部 success。
+- Run #152 构建产物：APK artifact ID `12072064847`，source ZIP artifact ID `12073295650`。
+- 本地 APK：`/mnt/data/LuokeAutoPiano_1.9.2.apk`，108,658 bytes，SHA-256 `c832a041974a9ccaad53e758697353e9c17b9b4292a03ddeba96de2215eb69f1`。
+- 本地源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.2_source.zip`，115,649 bytes，SHA-256 `c0b0ab0af7fd2b890084265db50682f429fe01cfa24eb5c2d078dda2076b9280`。
+- 两个最终文件均已验证 ZIP 完整性；源码归档确认 `versionCode 21` / `versionName 1.9.2`，且含 V12 映射、等待线和触控队列修复。
+- 重要：构建与 JVM 测试通过不代表完成 Android 真机验证。真机结果必须在用户实际安装测试后更新。
 
 ## 2. 项目是什么
 
@@ -310,3 +311,17 @@
 - 版本升级至 `1.9.1` / `versionCode 20`，避免安装时与当前 `1.9.0` 同版本号混淆。Run #149 <https://github.com/tryq123333/-/actions/runs/38954828385> 成功。构建前 V11 补丁步骤、Android APK 编译、JVM 单元测试、APK/source ZIP 上传、源码同步全部 success。构建提交 `20e0ab73f56f644fb925423b4b851a77968e5ca0`；源码归档同步提交 `bbc23bed367dde3d4fa400b1412b9b776d1849b1`。APK artifact ID `12069472430`；source ZIP artifact ID `12070111784`。
 - 最终 APK `/mnt/data/LuokeAutoPiano.apk`，106,630 bytes，SHA-256 `5720745611cf5d54eb0c83c3ee370cc5d3df05e11f59504661cdf82a128d6fdd`；源码 ZIP `/mnt/data/LuokeAutoPiano.zip`，114,248 bytes，SHA-256 `1dfe3dbd109585da326fe9e41cd5860fe26efedab86e26d947ce1669c2dcff41`。源码 ZIP 完整性测试通过，已确认其中版本号为 1.9.1/20 且包含 V11 触控交接代码。APK artifact 外层 ZIP 中的 APK 已解出供直接安装。
 - 仍需用户手机回归：在练习模式中遇到和弦，观察多个引导圈同时出现；逐个按任意顺序点其中一个，确认只让当前圈暂时消失，其他圈仍在，游戏对应键实际触发；完成一键后新的引导及时显示；取消手势或中途关闭练习/seek/停止时不残留旧圈、不误触发旧音。50ms 是本轮用于跨过系统悬浮窗触控层级更新时间的保守值，尚未通过实体 Android 设备验证；如果仍不触发，应进一步记录手势回调及游戏响应，而不是直接重校准。
+
+
+## 30. 2026-10-17 V1.9.2：九键图标映射、停在线上等候与连续触控串行化 V12
+
+- 用户分享真机截图并反馈：滚动谱面里的键图标看着不像对应实际游戏键；原本期待音符停在渐淡/播放线上等待手动弹奏；要求引导圈更大。用户还补充：快速连续点击两个先后出现的引导键时，后一个有两次没发出声音。
+- 核对 `note_key_atlas.webp` 后发现一个真实映射问题：3×3 图集是按照游戏画面采样位置顺序排列，并非 MIDI 音高顺序。旧代码直接用 `InstrumentLayout.indexOfPitch(pitch)` 作为图集 cell，导致音高与图案错配。新增 `InstrumentLayout.gameKeyAtlasCellForPitch()`，把音高顺序明确映射到图集 cell：`{8, 0, 1, 3, 2, 4, 5, 6, 7}`。新增 InstrumentLayout JVM 回归测试，断言 A2/E3/F3/G3/A3/B3/C4/D4/E4 的图集 cell 与实际图案一一对应，并断言不支持的音高返回 -1。
+- 滚动谱面九键行位置从直接使用 MIDI pitch class 改为使用九键乐器的固定音高顺序，避免相同音名/不同八度意外挤在同一视觉行造成错觉。练习开启时音块旁附当前音名，便于直接与实际引导圈上的音名核对。
+- 新增 NoteRollView 的明确练习等待状态：当前音组进入等待后，渐淡/播放竖线高亮，当前待弹游戏键对应的图标中心对准该线并出现浅绿提示环；已完成的和弦音符降低透明度，未完成音符继续突出。等待期间游标仍固定在音组开始时间，只有当前音组所需音键都成功发送触控后才继续。
+- 引导圈尺寸由基准 `dp(32)` 提升至 `dp(46)`，按相邻校准键的最近距离限制到 `0.78 × nearestDistance`，并提高最小显示尺寸；每个窗口仍以校准的真实游戏键坐标为中心。
+- 修复快速连续触控：Android `dispatchGesture()` 不适合在上一手势尚未完成时直接开始下一手势，否则后发手势可能取消正在运行的手势。当前补丁加入每服务实例的 FIFO 请求队列和单手势在途锁：触控目标移除后仍先等待约 50ms 的窗口层级更新；后续请求排队，必须等当前手势 onCompleted/onCancelled 后才分发下一次。保留其他未点击的和弦引导圈；已排队的音高暂时不再显示，以防误以为它尚未点过；异常取消时恢复引导并提示重试。停止/seek/关闭练习时清队列并校验 generation，阻止过期触控。
+- 新补丁脚本 `.github/scripts/apply_practice_visual_and_tap_v12.py`，在 V11 `apply_practice_gesture_handoff_v11.py` 之后执行；标记 `PRACTICE_VISUAL_MAPPING_WAIT_QUEUE_V12`。版本更新为 `1.9.2` / `versionCode 21`。
+- Run #152 <https://github.com/tryq123333/-/actions/runs/38961536739> 成功。V12 应用步骤、Android APK 编译、JVM 单元测试、APK/source ZIP 上传及源码同步全部 success。工作流提交 `4c9503db6e02f59cd80566377bb6b864dcd7838d`，源码归档同步后 HEAD `c7ed063feeb8dcae343785921cff2de654d50ca4`。APK artifact ID `12072064847`；source ZIP artifact ID `12073295650`。
+- APK `/mnt/data/LuokeAutoPiano_1.9.2.apk` 为 108,658 bytes，SHA-256 `c832a041974a9ccaad53e758697353e9c17b9b4292a03ddeba96de2215eb69f1`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.2_source.zip` 为 115,649 bytes，SHA-256 `c0b0ab0af7fd2b890084265db50682f429fe01cfa24eb5c2d078dda2076b9280`。两份文件完整性检查通过。
+- 仍未在实际 Android 手机上完成本轮真机回归。安装 1.9.2 后应重点确认：① A2/E3/F3/G3/A3/B3/C4/D4/E4 各图案与游戏实际图案/音高对应，尤其对照截图中误配的 A3；② 练习时当前音符图案停在线中央，而不是偏在线右侧；③ 和弦逐个点击时已弹按键的图标变淡，其他键保持提示；④ 引导圈更大且相邻键仍可分别点击；⑤ 快速连续点击两个不同引导键，两次都应产生游戏声音，并在最后一键触控完成后才推进下一组。自动测试通过不等于手机实测通过。
