@@ -785,6 +785,9 @@ jobs:
       - name: Fix practice guide touch handoff to game keys
         run: python .github/scripts/apply_practice_gesture_handoff_v11.py
 
+      - name: Fix nine-key icon mapping, practice playhead stop and serialized taps
+        run: python .github/scripts/apply_practice_visual_and_tap_v12.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
