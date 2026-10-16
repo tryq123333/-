@@ -764,7 +764,7 @@ jobs:
       - name: Redesign A/B dialog, confirm successful save and prefix accessibility service name
         run: python .github/scripts/apply_ab_dialog_redesign_feedback_v4.py
 
-      # Keep visible controls inside the resizable window hitbox and verify saved A/B values.
+      # Keep visible controls inside the resizable window hitbox; verify saved A/B values.
       - name: Uniformly scale A/B dialog and verify persisted values
         run: python .github/scripts/apply_ab_dialog_uniform_scale_save_fix_v5.py
 
