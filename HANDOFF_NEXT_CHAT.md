@@ -286,3 +286,14 @@
 - 新增 `AbLoopRangeMathTest.java`，覆盖 69.540 秒与 69.536 秒边界、合法范围、明显超长以及非法输入。为了下次从已同步的 V1.8.0 源 ZIP 重建不被旧版审计器拦截，V5/V6/V7/V8 历史构建脚本的版本检查改为允许更高版本号，不再要求恰好等于旧 versionCode。
 - GitHub Actions Run #144 成功：<https://github.com/tryq123333/-/actions/runs/38910125589>。构建前审计、`assembleDebug`、`testDebugUnitTest`、APK/源码 ZIP 上传、源码同步均成功。版本 `versionCode 18` / `versionName 1.8.0`。APK artifact ID `12050176410`；源码 ZIP artifact ID `12049667334`。APK 文件 99,462 bytes，SHA-256 `c73f8d9fc822bcafb02a21a03777a74d3b924f1f7a99ca7afeaee138a944b44c`。源码 ZIP 文件 109,210 bytes，SHA-256 `e0a3f7b4a7055e3c590c7eeb7f041561a5b0a3a7ead0529e9aa2e4da74d6516b`。根目录 `LuokeAutoPiano.zip` 的 Git blob SHA 为 `382f6d8495f5f8a5b54e2d14740a55ac46c3a36c`，由 workflow 同步提交 `93862724346383cffd1a0bbce538315065776ddd` 更新。
 - 重要：Run #144 的构建、JVM 测试与打包成功，但没有 Android 真机自动化环境，所以仍不能声称手机实测通过。用户应安装 V1.8.0 后重点检查：① 打开 A/B 设置，将 A 改成非零值并点完成；② 如果 B 显示为整首歌时长，保存后应看到弹窗内“保存成功”及数值，重开后 A/B 不应复位；③ 若输入确实无效或超出歌曲时长，弹窗应留下红色错误说明而不是静默消失；④ 设置窗打开时从谱面点 A/B 循环，复选框继续双向同步。
+
+
+## 28. 2026-10-17 V1.9.0：滚动音符练习模式、逐键引导与和弦分步点击 V10
+
+- 用户新增需求：滚动音符界面里在速度调节条下面增加淡色“练习”按钮，开启后按钮高亮；播放时音符到白线处停止等待用户点击对应游戏键，正确触控后才继续滚动；关闭则恢复正常滚动；对应游戏键位置显示视觉引导。
+- 新脚本 `.github/scripts/apply_practice_mode_v10.py`，工作流步骤 `Add note-by-note practice mode and key-position guides` 在 V9 A/B 保存修复之后、Gradle 编译之前运行；标记 `ROLL_PRACTICE_GATE_AND_KEY_GUIDE_V10`。版本 `versionCode 19` / `versionName 1.9.0`。
+- `NoteRollView` 在原速度条下增加低对比度“练习”chip，开启时浅绿高亮。练习开关保存到 `practice_mode_enabled`，服务/谱面恢复时同步状态。播放线程在每个同时间音符组达到白线时暂停游标并等待。游戏键对应位置出现环形引导及音名；点击引导后由无障碍服务把真实 tap 转发到校准的游戏坐标。只对当前组中实际有校准触点的音符显示/等待，避免不可触发的音符让练习永久卡住。
+- 和弦采用顺序点击，不要求同时触碰：当前和弦中的不同音高可以任意顺序一个接一个点；每点中一个，对应引导消失，其他尚未点的键继续引导；相同音高重复出现只需点一次，错误音高不会放行。练习关闭时通知播放等待线程并按普通自动演奏逻辑继续；暂停、seek、停止、隐藏/关闭谱面以及播放结束都会清理等待/引导状态，避免残留遮罩或永久等待。
+- 新增 `PracticeNoteGate.java` / `PracticeNoteGateTest.java`，覆盖单音精确命中、和弦逐键/任意顺序点击、重复音只计一次、错键不放行及清空等待状态。
+- GitHub Actions Run #146 成功：<https://github.com/tryq123333/-/actions/runs/38948663022>。练习功能审计、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/源码 ZIP 上传和源码同步全部 success。构建提交 `bf31305345dd02c4bf63a6b25d52d31aa88ea4ed`；自动同步主分支提交 `02201d5046ce6129e0fa68e55b788c1cb6349fcc`。APK artifact ID `12067228757`，文件 105,734 bytes，SHA-256 `9419d1f838a285e0feda4cc137829f6726e6d221859a44d10d7e7b13034265c0`。源码 ZIP artifact ID `12066833549`，文件 113,631 bytes，SHA-256 `07e59a56103dedfcfe9c66f14dbdbe3667cad6f3dd3e0db2f1f8b8aab497d4db`。本轮两个下载文件都通过 ZIP 完整性检查。
+- 重要限制：Run #146 的代码审计、Android 构建、JVM 单元测试与打包/同步均通过，但没有自动真机环境，暂不能声称用户手机上已完成验证。真机重点测：① 正常播放时“练习”关闭，音符继续自动演奏；② 开启后每个可触发音符停在白线处，并且只点对应的高亮游戏键才继续；③ 和弦可按任意顺序逐键点击，无需同时按、重复同音只需一次；④ 中途关闭练习、暂停、seek、停止、隐藏谱面后应恢复/清除正确状态，键位引导不可残留。
