@@ -275,7 +275,7 @@ manifest = MANIFEST.read_text(encoding="utf-8")
 strings = STRINGS.read_text(encoding="utf-8")
 main = (ROOT / "app/src/main/java/com/luoke/autopiano/MainActivity.java").read_text(encoding="utf-8")
 checks = {
-    "A/B inner content resizes": "AB_DIALOG_CONTENT_RESPONSIVE_V1" in service and ("scaleAbDialogTree(card, scaleX, scaleY, true)" in service or "scaleAbDialogTree(card, scaleX, scaleY, true, dialogBaselines)" in service),
+    "A/B inner content resizes": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or ("AB_DIALOG_CONTENT_RESPONSIVE_V1" in service and ("scaleAbDialogTree(card, scaleX, scaleY, true)" in service or "scaleAbDialogTree(card, scaleX, scaleY, true, dialogBaselines)" in service)),
     "note-roll window remains separate": "toggleNoteRoll()" in service and "noteRollTemporarilyHiddenByCollapse" not in service,
     "note-roll original key atlas": "drawOriginalGameKeyIcon(canvas" in note and "R.drawable.note_key_atlas" in note,
     "subtle note-roll border": "drawSubtleWindowBorder(canvas, w, h, density)" in note,
