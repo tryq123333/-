@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 SERVICE = Path("LuokeAutoPiano/app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java")
 MARKER = "PRACTICE_GESTURE_WINDOW_HANDOFF_V11"
@@ -146,8 +147,24 @@ if MARKER not in source:
     SERVICE.write_text(source, encoding="utf-8")
 
 source = SERVICE.read_text(encoding="utf-8")
+
+# Give the fix a fresh installable app version; do this outside the source-patch
+# guard so future builds keep the version stable once it reaches 1.9.1.
+BUILD = Path("LuokeAutoPiano/app/build.gradle")
+build = BUILD.read_text(encoding="utf-8")
+version_match = re.search(r"versionCode\s+(\d+)", build)
+if not version_match:
+    raise SystemExit("Cannot find versionCode for the practice handoff build.")
+if int(version_match.group(1)) < 20:
+    build = build[:version_match.start(1)] + "20" + build[version_match.end(1):]
+if not re.search(r"versionName\s+['\"][^'\"]*['\"]", build):
+    raise SystemExit("Cannot find versionName for the practice handoff build.")
+build = re.sub(r"versionName\s+['\"][^'\"]*['\"]", "versionName '1.9.1'", build, count=1)
+BUILD.write_text(build, encoding="utf-8")
+
 checks = {
     "version marker present": MARKER in source,
+    "installable version bumped": "versionCode 20" in BUILD.read_text(encoding="utf-8") and "versionName '1.9.1'" in BUILD.read_text(encoding="utf-8"),
     "only tapped guide is removed": "Remove only the tapped guide. Keep the other chord guides on screen." in source,
     "window handoff delay is present": "postDelayed(\n                () -> dispatchPracticeKeyTapAfterWindowSettles(target, tapGeneration), 50L);" in source,
     "delayed touch is guarded against stale note groups": "tapGeneration != practiceGestureGeneration" in source,
