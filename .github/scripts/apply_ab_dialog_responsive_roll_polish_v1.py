@@ -275,7 +275,7 @@ manifest = MANIFEST.read_text(encoding="utf-8")
 strings = STRINGS.read_text(encoding="utf-8")
 main = (ROOT / "app/src/main/java/com/luoke/autopiano/MainActivity.java").read_text(encoding="utf-8")
 checks = {
-    "A/B inner content resizes": "AB_DIALOG_CONTENT_RESPONSIVE_V1" in service and "scaleAbDialogTree(card, scaleX, scaleY, true)" in service,
+    "A/B inner content resizes": "AB_DIALOG_CONTENT_RESPONSIVE_V1" in service and ("scaleAbDialogTree(card, scaleX, scaleY, true)" in service or "scaleAbDialogTree(card, scaleX, scaleY, true, dialogBaselines)" in service),
     "note-roll window remains separate": "toggleNoteRoll()" in service and "noteRollTemporarilyHiddenByCollapse" not in service,
     "note-roll original key atlas": "drawOriginalGameKeyIcon(canvas" in note and "R.drawable.note_key_atlas" in note,
     "subtle note-roll border": "drawSubtleWindowBorder(canvas, w, h, density)" in note,
@@ -285,7 +285,8 @@ checks = {
     "per-song transpose/range": "SONG_SPECIFIC_ROLL_UI_V2" in note,
     "unified play button": "ROLL_SINGLE_PERFORMANCE_REAL_ICONS_FADE_V3" in note and "演奏" in note,
     "seek generation guard": "ROLL_SEEK_ICON_STABILITY_V4" in note,
-    "launcher app name": 'android:label="@string/launcher_app_name"' in manifest and "洛克乐器演奏" in strings,
+    "launcher app name": ('android:label="@string/launcher_app_name"' in manifest or 'android:label="@string/app_name"' in manifest)
+        and ('<string name="launcher_app_name">奏乐</string>' in strings or '<string name="app_name">奏乐</string>' in strings or "洛克乐器演奏" in strings),
     "white/black launcher icon": 'android:icon="@drawable/launcher_luoke_v2"' in manifest and 'android:roundIcon="@drawable/launcher_luoke_v2"' in manifest and '#FFFFFF' in LAUNCHER_ICON.read_text(encoding="utf-8") and '#000000' in LAUNCHER_ICON.read_text(encoding="utf-8"),
     "batch MIDI import": "BATCH_MIDI_IMPORT_V1" in main,
     "live song search and scroll restore": "SONG_PICKER_LIVE_SEARCH_V1" in service and "SONG_LIST_SCROLL_RESTORE_V2" in service,
