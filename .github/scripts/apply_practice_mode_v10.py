@@ -514,7 +514,7 @@ checks = {
         and "practiceExpectedPitches" in service,
     "toggle off, stop, seek and playback exit release wait": "PRACTICE_RESULT_AUTOPLAY" in service
         and "practiceAwaitingInput = false;" in service,
-    "single note and chord gates are tested": "chordRequiresEveryDistinctPitch" in tests.read_text(encoding="utf-8")
+    "single note and chord gates are tested": "chordCanBeTappedOneKeyAtATimeInAnyOrder" in tests.read_text(encoding="utf-8")
         and "singleNoteWaitsForItsExactPitch" in tests.read_text(encoding="utf-8"),
     "v1.9.0 version set": "versionCode 19" in build and "versionName '1.9.0'" in build,
 }
