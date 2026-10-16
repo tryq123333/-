@@ -761,6 +761,9 @@ jobs:
       - name: Fix A/B dialog visibility, compact controls and sync loop state
         run: python .github/scripts/apply_ab_loop_dialog_sync_compact_v3.py
 
+      - name: Redesign A/B dialog, confirm successful save and prefix accessibility service name
+        run: python .github/scripts/apply_ab_dialog_redesign_feedback_v4.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
