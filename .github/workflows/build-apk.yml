@@ -747,6 +747,9 @@ jobs:
           print("Restored independent NoteRoll sizing; made the expanded music-control panel remeasure on play/pause and visible-control changes; version 0.9.0.")
           PY
 
+      - name: Make A/B dialog responsive and polish note-roll visuals; audit preserved features
+        run: python .github/scripts/apply_ab_dialog_responsive_roll_polish_v1.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
