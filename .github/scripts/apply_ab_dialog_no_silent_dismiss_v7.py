@@ -136,7 +136,7 @@ checks = {
     "accessibility service name prefixed": 'android:label="#奏乐触控服务"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8"),
     "app identity stays 奏乐": "奏乐" in (ROOT / "app/src/main/res/values/strings.xml").read_text(encoding="utf-8")
         and 'android:icon="@drawable/launcher_luoke_v2"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8"),
-    "version 1.6.0": "versionCode 16" in build and "versionName '1.6.0'" in build,
+    "version 1.6.0": int(re.search(r"versionCode\\s+(\\d+)", build).group(1)) >= 16 and "versionName '1.6.0'" in build,
 }
 failed = [name for name, ok in checks.items() if not ok]
 if failed:
