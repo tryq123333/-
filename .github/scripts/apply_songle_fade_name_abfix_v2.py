@@ -290,7 +290,7 @@ checks = {
     "rewind and seek guard retained": "ROLL_REWIND_NEXT_TO_AB_V7" in note and "playbackUiGeneration" in service,
     "live search/batch import/song removal retained": "SONG_PICKER_LIVE_SEARCH_V1" in service and "BATCH_MIDI_IMPORT_V1" in main and "ROLL_SPEED_CONTROL_AND_SONG_REMOVAL_V1" in service,
     "white/black launcher icon retained": 'android:icon="@drawable/launcher_luoke_v2"' in manifest,
-    "new app version": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or ("versionCode 11" in build and "versionName '1.1.0'" in build),
+    "new app version": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("versionCode 11" in build and "versionName '1.1.0'" in build),
 }
 failed = [name for name, ok in checks.items() if not ok]
 if failed:
