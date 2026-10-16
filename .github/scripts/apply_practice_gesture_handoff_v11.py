@@ -15,6 +15,11 @@ def replace_once(source, old, new, label):
 
 source = SERVICE.read_text(encoding="utf-8")
 
+# V12 replaces the V11 tap handler and uses a map/FIFO queue; do not try to reapply the older patch.
+if "PRACTICE_VISUAL_MAPPING_WAIT_QUEUE_V12" in source:
+    print("Practice touch V12 supersedes V11; skipping the older patch on the updated source archive.")
+    raise SystemExit(0)
+
 if MARKER not in source:
     source = replace_once(
         source,
