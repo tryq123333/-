@@ -167,7 +167,7 @@ checks = {
     "service name prefix retained": 'android:label="#奏乐触控服务"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8"),
     "app name and icon retained": "奏乐" in (ROOT / "app/src/main/res/values/strings.xml").read_text(encoding="utf-8")
         and 'android:icon="@drawable/launcher_luoke_v2"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8"),
-    "version 1.5.0": int(re.search(r"versionCode\\s+(\\d+)", build).group(1)) >= 15 and "versionName '1.5.0'" in build,
+    "version 1.5.0": int(re.search("versionCode +([0-9]+)", build).group(1)) >= 15 and "versionName '1.5.0'" in build,
 }
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
