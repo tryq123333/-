@@ -201,3 +201,12 @@
 - 为避免源码归档已经应用补丁时重复运行导致失败，工作流中的 V3–V7 音符补丁、曲目实时搜索、批量导入、速度/移除、曲目滚动位置等步骤均增加已应用标记检测，已存在时跳过而不是重复打补丁。
 - 成功构建 Run #117：https://github.com/tryq123333/-/actions/runs/38829183394，提交 `607103e775378519620dd5bbb5f733189ec10610`。APK Build、JVM tests、APK 上传、源码 ZIP 打包/上传、源码同步全部 success。APK artifact ID `12016107249`；source ZIP artifact ID `12016491816`。应用版本 `versionCode 9` / `versionName 0.9.0`。APK 已保存到 `/mnt/data/LuokeAutoPiano.apk`，大小 93,794 字节，ZIP 完整性检查通过；确认包含 `classes.dex`、`resources.arsc` 和 `note_key_atlas`。
 - 仍未做 Android 真机 UI 回归。手机上优先打开主音乐图标的小窗，分别检查未播放→播放、播放→暂停、谱面打开/关闭几种状态下，底板高度是否紧贴当前可见按钮/内容、没有多余空白或裁切；确认滚动谱面能独立开关且高度保持用户设定。若边框仍未跟随某个特定状态，需按该状态再检查状态刷新函数是否被调用，不要改成固定 124/148dp 的谱面高度逻辑。
+## 18. 2026-10-16 A/B设置窗响应式缩放、谱面细边、速度透明度、进度时间与历史改动审计
+
+- 用户本轮要求：A/B循环设置窗口拖动改变大小时内部控件/文字需一起缩放；滚动谱面窗口透明外框增加一圈很淡的边界；速度滑杆降低饱和度和不透明度；底部进度条下方显示当前/总时长，时间标签随播放游标水平移动；检查此前变更有没有遗漏。
+- 新构建脚本 `.github/scripts/apply_ab_dialog_responsive_roll_polish_v1.py`，并在 workflow 里新增 `Make A/B dialog responsive and polish note-roll visuals; audit preserved features` 步骤。A/B窗口按当前外框尺寸相对基准计算横/纵比例，递归缩放内部控件尺寸、边距、内边距与字号；拖动窗口位置逻辑和储存尺寸仍保留。
+- NoteRollView 外框增添 `0x339bb1c1` / `0.8dp` 低对比描边；底部进度轨移到时间标签上方，时间标签显示 `当前位置 / 歌曲总时长`，采用小号淡色字体并随进度游标水平移动。速度标题、轨道、填充和滑块颜色只在 `drawSpeedControl()` 区域内降对比度，未改变播放速度算法及控制范围。
+- 审计时发现一个真实遗漏：`launcher_luoke_v2.xml` 资源早已是白底黑音符，但 `AndroidManifest.xml` 仍引用旧 `@drawable/ic_music_note`（绿底白符），所以安装包桌面图标继续显示旧配色。当前脚本已将 manifest 的 `icon` 和 `roundIcon` 改回 `@drawable/launcher_luoke_v2`，并将旧 `ic_music_note.xml` 也统一为白底黑符。应用名称仍使用 `@string/launcher_app_name`（洛克乐器演奏）。
+- 构建前 feature audit 已通过并验证这些历史功能标记/关键入口仍存在：主面板按状态重新测量高度、谱面独立开关、原游戏按键图集、合并演奏按钮、进度 seek 代数保护、A/B/回起点、每曲目移调/音域检查、实时搜索、曲目列表滚动还原、批量 MIDI 导入、速度调节/移除曲目。没有再引入谱面与主面板联动，也没有使用先前错误的播放态固定谱面高度。
+- Run #120 成功：https://github.com/tryq123333/-/actions/runs/38832553412。构建前审计、Android APK 编译、JVM 单元测试、APK 与源码 ZIP 上传、源码同步全部 success。代码提交 `e68ed5c72cf788e3883a889b13c7bd50183e09bb`，源码同步提交 `68af310e004076f3817281274529c9add223578e`。APK artifact ID `12017891410`，source ZIP artifact ID `12017846425`。版本 `versionCode 10` / `versionName 1.0.0`。APK 已核验 ZIP 完整性，路径 `/mnt/data/LuokeAutoPiano.apk`，95,874 bytes，SHA-256 `710ebfc9c20578994626ab6b4894fd5e2afddb2bc23f13bed03d6c20bda7d305`。
+- 仍需用户真机回归：缩小/放大 A/B 设置窗时按钮和字号是否恰当、软键盘弹出期间内容是否仍可滚动/可点；谱面外框是否足够淡但可辨；播放、暂停与拖动时底部时间是否同步；速度滑杆是否视觉柔和；更新安装后确认桌面图标确实白底黑音符（若系统仍显示缓存旧图标，先检查安装包版本 1.0.0 是否覆盖成功）。本构建通过编译/单测，但尚未由 Android 真机截图确认最终视觉效果。
