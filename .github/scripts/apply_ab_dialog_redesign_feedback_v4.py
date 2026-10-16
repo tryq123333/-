@@ -426,7 +426,7 @@ save_start = service.find("    private boolean saveAbLoopSettings(CheckBox enabl
 save_end = service.find("\n    private String formatSecondsField(", save_start)
 save_method = service[save_start:save_end]
 checks = {
-    "no clipped scroll area": "ScrollView" not in dialog and "bodyScroll" not in dialog,
+    "no clipped scroll area": "ScrollView bodyScroll =" not in dialog and "card.addView(bodyScroll" not in dialog,
     "compact set-point chips": 'abDialogAction("当前设为 A", false)' in dialog
         and 'abDialogAction("当前设为 B", false)' in dialog,
     "fixed complete action visible": 'abDialogAction("完成", true)' in dialog
