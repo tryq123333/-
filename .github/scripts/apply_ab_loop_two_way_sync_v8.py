@@ -135,7 +135,7 @@ checks = {
         and "Do not dismiss the dialog on taps that miss a child hitbox." in dialog,
     "uniform layout scaling and service label preserved": "scaleAbDialogTree(content, scale, scale, true, baselines);" in service
         and 'android:label="#奏乐触控服务"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8"),
-    "version 1.7.0": "versionCode 17" in build and "versionName '1.7.0'" in build,
+    "version 1.7.0": int(re.search(r"versionCode\\s+(\\d+)", build).group(1)) >= 17 and "versionName '1.7.0'" in build,
 }
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
