@@ -768,6 +768,9 @@ jobs:
       - name: Uniformly scale A/B dialog and verify persisted values
         run: python .github/scripts/apply_ab_dialog_uniform_scale_save_fix_v5.py
 
+      - name: Fix A/B touch bounds, uniformly resize controls and put Done first
+        run: python .github/scripts/apply_ab_dialog_true_bounds_order_v6.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
