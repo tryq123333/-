@@ -456,8 +456,14 @@ save_start = service.find("    private boolean saveAbLoopSettings(CheckBox enabl
 save_end = service.find("\n    private String formatSecondsField(", save_start)
 save_method = service[save_start:save_end]
 checks = {
-    "uniform scale only": "applyAbDialogUniformScale(card, content, baseWidth, baseHeight)" in dialog
-        and "content.setScaleX(scale)" in service and "content.setScaleY(scale)" in service,
+    "uniform scale only": (
+        "applyAbDialogUniformScale(card, content, baseWidth, baseHeight)" in dialog
+        or "applyAbDialogUniformScale(card, content, baseWidth, baseHeight, abDialogBaselines)" in dialog
+    ) and (
+        ("content.setScaleX(scale)" in service and "content.setScaleY(scale)" in service)
+        or ("scaleAbDialogTree(content, scale, scale, true, baselines)" in service
+            and "content.setScaleX(1f)" in service and "content.setScaleY(1f)" in service)
+    ),
     "A/B row has reset and done beside checkbox": "optionRow.addView(enabled" in dialog and "optionRow.addView(reset" in dialog and "optionRow.addView(done" in dialog,
     "narrow fields": "new LinearLayout.LayoutParams(dp(104), -2)" in dialog and "new LinearLayout.LayoutParams(-1, dp(30))" in dialog,
     "set-A button left aligned within A column": "aColumn.addView(aField" in dialog and "pointsRow.addView(setA" in dialog
