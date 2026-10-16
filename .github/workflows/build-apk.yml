@@ -525,8 +525,173 @@ jobs:
       - name: Sync roll collapse and restore song picker position
         run: python .github/scripts/apply_panel_roll_sync_and_song_list_restore_v1.py
 
-      - name: Adapt note-roll window to playing/paused state
-        run: python .github/scripts/apply_note_roll_playback_adaptive_size_v1.py
+      - name: Auto-size the expanded music control panel on state changes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          
+          ROOT = Path("LuokeAutoPiano")
+          SERVICE = ROOT / "app/src/main/java/com/luoke/autopiano/MusicAccessibilityService.java"
+          MATH = ROOT / "app/src/main/java/com/luoke/autopiano/NoteRollGestureMath.java"
+          TEST = ROOT / "app/src/test/java/com/luoke/autopiano/NoteRollGestureMathTest.java"
+          BUILD = ROOT / "app/build.gradle"
+          MARKER = "CONTROL_PANEL_CONTENT_SIZING_V1"
+          
+          def once(source, old, new, label):
+              if old in source:
+                  return source.replace(old, new, 1)
+              if new in source:
+                  return source
+              raise SystemExit("Cannot patch " + label + ": anchor missing.")
+          
+          service = SERVICE.read_text(encoding="utf-8")
+          math = MATH.read_text(encoding="utf-8")
+          test = TEST.read_text(encoding="utf-8")
+          build = BUILD.read_text(encoding="utf-8")
+          
+          # Undo the prior height experiment, which targeted the independent scrolling score window.
+          service = re.sub(
+              r"(?m)^\s*// Base height is the user's saved/manual size; playing may temporarily expand the window\.\s*\n"
+              r"\s*private int noteRollBaseHeightPx = -1;\s*\n"
+              r"\s*private int noteRollLastSizingState = -1;\s*\n", "", service)
+          service = re.sub(
+              r"(?s)    private void syncNoteRollWindowToPlaybackState\(\) \{.*?\n    \}\n\n(?=    private void refreshMiniPlaybackButton\(\))",
+              "", service, count=1)
+          service = service.replace("        syncNoteRollWindowToPlaybackState();\n", "")
+          service = service.replace("            noteRollBaseHeightPx = height;\n            noteRollLastSizingState = -1;\n", "")
+          service = service.replace(
+              "int minHeight = Math.min(dp(124), Math.max(dp(78), screenHeight - dp(12)));",
+              "int minHeight = Math.min(dp(100), Math.max(dp(78), screenHeight - dp(12)));", 1)
+          service = re.sub(
+              r"(?s)        \} else if \(phase == NoteRollView\.PHASE_END\) \{\n"
+              r"            if \(mode == NoteRollView\.MODE_RESIZE\) \{\n"
+              r"                noteRollBaseHeightPx.*?"
+              r"            refreshNoteRollData\(\);\n        \}",
+              """        } else if (phase == NoteRollView.PHASE_END) {
+                      prefs.edit().putInt("note_roll_width_px", noteRollParams.width)
+                              .putInt("note_roll_height_px", noteRollParams.height)
+                              .putInt("note_roll_x", noteRollParams.x)
+                              .putInt("note_roll_y", noteRollParams.y).apply();
+                      refreshNoteRollData();
+                  }""", service, count=1)
+          service = service.replace(" NOTE_ROLL_PLAYBACK_ADAPTIVE_HEIGHT_V1 */", " */")
+          
+          math = re.sub(
+              r"\n\s*static int playbackOverlayHeight\(int baseHeight, boolean playing,.*?\n\s*\}\n(?=\})",
+              "\n", math, count=1, flags=re.S)
+          test = re.sub(
+              r"\n\s*@Test public void playbackStateExpandsSmallWindowButRestoresBaseWhenPaused\(\) \{.*?\n\s*\}\n"
+              r"\s*@Test public void adaptiveWindowPreservesLargerManualHeight\(\) \{.*?\n\s*\}",
+              "", test, count=1, flags=re.S)
+          
+          # The expanded music-control window must recalculate its height from visible controls.
+          if MARKER not in service:
+              service = once(service,
+                  "    private boolean controlHeightUserSized;\n",
+                  "    private boolean controlHeightUserSized;\n"
+                  "    // " + MARKER + ": use WRAP_CONTENT after playback or visible-control changes.\n"
+                  "    private int controlPanelContentState = Integer.MIN_VALUE;\n",
+                  "control-panel content sizing state")
+          
+              helper = """    private void syncControlPanelHeightToContent() {
+                  if (controlOverlay == null || controlParams == null || windowManager == null || controlPanelCollapsed) return;
+                  boolean hasRoll = noteRollView != null;
+                  boolean hasActivePlayback = playbackThread != null && playbackThread.isAlive()
+                          && playbackActive && !stopRequested;
+                  int state = (hasRoll ? 1 : 0) | (hasActivePlayback ? 2 : 0) | (paused ? 4 : 0);
+                  if (state == controlPanelContentState) return;
+          
+                  controlPanelContentState = state;
+                  controlHeightUserSized = false;
+                  controlParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
+                  android.util.DisplayMetrics metrics = getResources().getDisplayMetrics();
+                  int screenHeight = Math.max(1, metrics.heightPixels);
+                  controlParams.y = Math.max(0, Math.min(screenHeight - dp(44), controlParams.y));
+                  try {
+                      windowManager.updateViewLayout(controlOverlay, controlParams);
+                      controlOverlay.post(() -> {
+                          if (controlOverlay == null || controlParams == null || windowManager == null) return;
+                          int actualHeight = Math.max(dp(38), controlOverlay.getHeight());
+                          int targetY = Math.max(0, Math.min(metrics.heightPixels - actualHeight, controlParams.y));
+                          if (targetY != controlParams.y) {
+                              controlParams.y = targetY;
+                              try { windowManager.updateViewLayout(controlOverlay, controlParams); } catch (Exception ignored) { }
+                          }
+                      });
+                  } catch (Exception ignored) {
+                      controlPanelContentState = Integer.MIN_VALUE;
+                  }
+              }
+          
+          """
+              service = once(service,
+                  "    private void updateControlPanelPlaybackButtons() {",
+                  helper + "    private void updateControlPanelPlaybackButtons() {",
+                  "insert expanded-panel content auto-sizing")
+          
+              service = once(service,
+                  """        button.setContentDescription(active ? "正在演奏，点击暂停" : "演奏，点击开始或继续");
+              }
+          
+              private void syncControlPanelHeightToContent() {""",
+                  """        button.setContentDescription(active ? "正在演奏，点击暂停" : "演奏，点击开始或继续");
+                  syncControlPanelHeightToContent();
+              }
+          
+              private void syncControlPanelHeightToContent() {""",
+                  "refresh panel size when play/pause changes")
+          
+              service = once(service,
+                  """        boolean layoutV3 = prefs.getBoolean("control_overlay_resize_v3", false);
+                  int defaultWidth = Math.min(maxWidth, dp(500));""",
+                  """        boolean layoutV3 = prefs.getBoolean("control_overlay_resize_v3", false);
+                  if (!prefs.getBoolean("control_panel_content_height_v1", false)) {
+                      prefs.edit().remove("control_height_px")
+                              .putBoolean("control_panel_content_height_v1", true).apply();
+                  }
+                  int defaultWidth = Math.min(maxWidth, dp(500));""",
+                  "migrate stale fixed panel height")
+          
+              service = once(service,
+                  """            windowManager.addView(controlOverlay, controlParams);
+                      prefs.edit().putBoolean("control_overlay_resize_v3", true).apply();""",
+                  """            windowManager.addView(controlOverlay, controlParams);
+                      prefs.edit().putBoolean("control_overlay_resize_v3", true).apply();
+                      syncControlPanelHeightToContent();""",
+                  "measure the panel after it is attached")
+          
+              service = service.replace(
+                  "ROLL_FINAL_CONTROLS_SEEK_LAUNCHER_V6 */",
+                  "ROLL_FINAL_CONTROLS_SEEK_LAUNCHER_V6 " + MARKER + " */", 1)
+              if MARKER not in service:
+                  service = service.replace(
+                      "public class MusicAccessibilityService extends AccessibilityService {",
+                      "public class MusicAccessibilityService extends AccessibilityService { // " + MARKER, 1)
+          
+          build = re.sub(r"versionCode\s+\d+", "versionCode 9", build, count=1)
+          build = re.sub(r"versionName\s+['\"][^'\"]*['\"]", "versionName '0.9.0'", build, count=1)
+          
+          SERVICE.write_text(service, encoding="utf-8")
+          MATH.write_text(math, encoding="utf-8")
+          TEST.write_text(test, encoding="utf-8")
+          BUILD.write_text(build, encoding="utf-8")
+          
+          service = SERVICE.read_text(encoding="utf-8")
+          math = MATH.read_text(encoding="utf-8")
+          test = TEST.read_text(encoding="utf-8")
+          if "syncNoteRollWindowToPlaybackState" in service or "noteRollBaseHeightPx" in service or "playbackOverlayHeight(" in math:
+              raise SystemExit("Incorrect note-roll adaptive sizing code was not fully removed.")
+          if "syncControlPanelHeightToContent();" not in service or MARKER not in service:
+              raise SystemExit("Expanded control-panel state-based sizing was not wired.")
+          if "control_panel_content_height_v1" not in service or 'remove("control_height_px")' not in service:
+              raise SystemExit("Migration from a stale fixed panel height is missing.")
+          if "playbackStateExpandsSmallWindowButRestoresBaseWhenPaused" in test:
+              raise SystemExit("Incorrect note-roll height tests were not removed.")
+          if "versionCode 9" not in BUILD.read_text(encoding="utf-8") or "versionName '0.9.0'" not in BUILD.read_text(encoding="utf-8"):
+              raise SystemExit("Version bump missing.")
+          print("Restored independent NoteRoll sizing; made the expanded music-control panel remeasure on play/pause and visible-control changes; version 0.9.0.")
+          PY
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
