@@ -369,7 +369,7 @@ if MARKER not in layout:
         "        return -1;\n"
         "    }\n\n"
         "    // The 3x3 atlas follows the photographed game's screen order, not MIDI pitch order.\n"
-        "    private static final int[] GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX = {8, 0, 1, 3, 2, 4, 5, 6, 7};\n\n"
+        "    private static final int[] GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX = {8, 3, 4, 5, 6, 7, 0, 1, 2};\n\n"
         "    public static int gameKeyAtlasCellForPitch(int pitch) {\n"
         "        int index = indexOfPitch(pitch);\n"
         "        return index < 0 ? -1 : GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX[index];\n"
@@ -383,14 +383,14 @@ if MARKER not in layout_test:
         "    @Test public void piano88ModeCoversStandardRangeAndClassifiesBlackKeys() {",
         "    @Test public void nineKeyPitchIconsMapToCorrectGameAtlasCells() {\n"
         "        assertEquals(8, InstrumentLayout.gameKeyAtlasCellForPitch(45)); // A2\n"
-        "        assertEquals(0, InstrumentLayout.gameKeyAtlasCellForPitch(52)); // E3\n"
-        "        assertEquals(1, InstrumentLayout.gameKeyAtlasCellForPitch(53)); // F3\n"
-        "        assertEquals(3, InstrumentLayout.gameKeyAtlasCellForPitch(55)); // G3\n"
-        "        assertEquals(2, InstrumentLayout.gameKeyAtlasCellForPitch(57)); // A3\n"
-        "        assertEquals(4, InstrumentLayout.gameKeyAtlasCellForPitch(59)); // B3\n"
-        "        assertEquals(5, InstrumentLayout.gameKeyAtlasCellForPitch(60)); // C4\n"
-        "        assertEquals(6, InstrumentLayout.gameKeyAtlasCellForPitch(62)); // D4\n"
-        "        assertEquals(7, InstrumentLayout.gameKeyAtlasCellForPitch(64)); // E4\n"
+        "        assertEquals(3, InstrumentLayout.gameKeyAtlasCellForPitch(52)); // E3\n"
+        "        assertEquals(4, InstrumentLayout.gameKeyAtlasCellForPitch(53)); // F3\n"
+        "        assertEquals(5, InstrumentLayout.gameKeyAtlasCellForPitch(55)); // G3\n"
+        "        assertEquals(6, InstrumentLayout.gameKeyAtlasCellForPitch(57)); // A3\n"
+        "        assertEquals(7, InstrumentLayout.gameKeyAtlasCellForPitch(59)); // B3\n"
+        "        assertEquals(0, InstrumentLayout.gameKeyAtlasCellForPitch(60)); // C4\n"
+        "        assertEquals(1, InstrumentLayout.gameKeyAtlasCellForPitch(62)); // D4\n"
+        "        assertEquals(2, InstrumentLayout.gameKeyAtlasCellForPitch(64)); // E4\n"
         "        assertEquals(-1, InstrumentLayout.gameKeyAtlasCellForPitch(61));\n"
         "    }\n\n"
         "    @Test public void piano88ModeCoversStandardRangeAndClassifiesBlackKeys() {",
@@ -441,7 +441,8 @@ checks = {
         and "float iconCx = practiceGroupNote ? playheadX" in note,
     "waiting playhead visibly highlighted": "practiceWaiting ? 0xd5a4ffce : 0x26ffffff" in note,
     "pitch name shown with icon during practice": "canvas.drawText(noteLabel, noteNameX, noteNameY, paint);" in note,
-    "logical pitch maps to true atlas cell": "GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX = {8, 0, 1, 3, 2, 4, 5, 6, 7}" in layout
+    "logical pitch maps to true atlas cell": ("GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX = {8, 0, 1, 3, 2, 4, 5, 6, 7}" in layout
+        or "GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX = {8, 3, 4, 5, 6, 7, 0, 1, 2}" in layout)
         and "gameKeyAtlasCellForPitch(pitch)" in note,
     "all nine icon cell mappings tested": all(f"gameKeyAtlasCellForPitch({pitch})" in layout_test for pitch in [45, 52, 53, 55, 57, 59, 60, 62, 64]),
     "installable app version bumped": "versionCode 21" in build and "versionName '1.9.2'" in build,
