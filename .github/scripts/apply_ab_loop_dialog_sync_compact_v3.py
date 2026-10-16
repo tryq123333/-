@@ -288,7 +288,7 @@ checks = {
     "earlier UI and app naming remain": "ROLL_SINGLE_PERFORMANCE_REAL_ICONS_FADE_V3" in service
         and 'android:icon="@drawable/launcher_luoke_v2"' in (ROOT / "app/src/main/AndroidManifest.xml").read_text(encoding="utf-8")
         and "<string name=\"app_name\">奏乐</string>" in (ROOT / "app/src/main/res/values/strings.xml").read_text(encoding="utf-8"),
-    "version 1.2.0 or newer": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or ("versionCode 12" in BUILD.read_text(encoding="utf-8") and "versionName '1.2.0'" in BUILD.read_text(encoding="utf-8")),
+    "version 1.2.0 or newer": "AB_DIALOG_UNIFORM_SCALE_SAVE_FIX_V5" in service or "AB_DIALOG_REDESIGN_FEEDBACK_V4" in service or ("versionCode 12" in BUILD.read_text(encoding="utf-8") and "versionName '1.2.0'" in BUILD.read_text(encoding="utf-8")),
 }
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
