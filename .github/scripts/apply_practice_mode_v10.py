@@ -168,7 +168,11 @@ if MARKER not in service:
     private int awaitPracticeBatch(List<MidiParser.NoteEvent> batch, int transpose,
                                   long noteAtMicros, int expectedSeekVersion) {
         LinkedHashSet<Integer> expected = new LinkedHashSet<>();
-        for (MidiParser.NoteEvent note : batch) expected.add(note.pitch + transpose);
+        for (MidiParser.NoteEvent note : batch) {
+            int pitch = note.pitch + transpose;
+            // Notes outside the calibrated instrument have no tappable target; don't wait forever for them.
+            if (InstrumentLayout.pointForPitch(prefs, pitch) != null) expected.add(pitch);
+        }
         synchronized (playbackLock) {
             if (!practiceModeEnabled) return PRACTICE_RESULT_AUTOPLAY;
             practiceNoteGate.begin(expected);
