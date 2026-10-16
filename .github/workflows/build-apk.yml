@@ -777,6 +777,8 @@ jobs:
 
       - name: Synchronize A/B state between note-roll toolbar and settings dialog
         run: python .github/scripts/apply_ab_loop_two_way_sync_v8.py
+      - name: Fix A/B duration rounding and show save result inside dialog
+        run: python .github/scripts/apply_ab_dialog_feedback_persistence_v9.py
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
