@@ -297,7 +297,7 @@ checks = {
     "range report describes off behavior": "音域检测已关闭，超出映射音符将跳过" in service,
     "playback out-of-range block is conditional": "SongRangeCheckPolicy.shouldBlockPlayback(rangeCheckEnabled, !missing.isEmpty())" in service,
     "unmapped-point hard block is conditional": "if (rangeCheckEnabled) {" in service and "所选片段中有音符尚未映射到触控位置，已阻止演奏。" in service,
-    "empty unmapped note batches are skipped safely": "if (points.isEmpty())" in service and "attempting a gesture with zero strokes" in service,
+    "empty unmapped note batches are skipped safely": "if (points.isEmpty())" in service and "Skip just that chord and preserve the timing" in service,
     "main song info reflects disabled mode": "SONG_RANGE_CHECK_TOGGLE_V18" in main and "音域检测：已关闭" in main,
     "per-song preference key helper exists": "static String rangeCheckEnabledKey(String songPath)" in keys,
     "policy tests cover on/off gating": "disabledCheckDoesNotBlockForUnsupportedNotes" in policy_test and "enabledCheckBlocksWhenUnsupportedNotesExist" in policy_test,
