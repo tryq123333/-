@@ -8,17 +8,17 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 当前源码归档 blob SHA：`8b0e28c0f528c62c81020d19d7f077af588f60f6`
+- 当前源码归档 blob SHA：`7e5dffc46141a5635fdc0609c5efdc3126167fcd`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新成功构建：Run #168，应用版本 `1.9.5` / `versionCode 24`
-  <https://github.com/tryq123333/-/actions/runs/39039809176>
-- Run #168 工作流提交：`06ae72b9b9873b6c0d4150de45dd1fda6528de25`
-- 当前 main HEAD（归档同步后）：`1d828c0308328fea972c075509cb2094eac3d9b1`
-- Run #168 的 V15 patch、APK 编译、JVM 单元测试、APK/source ZIP 打包上传与源码同步全部 success。
-- Run #168 构建产物：APK artifact ID `12104085252`；source ZIP artifact ID `12103264523`。
-- 最终 APK：`/mnt/data/LuokeAutoPiano_1.9.5.apk`，108,790 bytes，SHA-256 `dfc2d1eeb9a44436ef8cbc20deae84f600aec8f0b334b1b273bdf44d2ce52e57`。
-- 最终源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.5_source.zip`，116,025 bytes，SHA-256 `92267583ccc5d013722628bd830a51ac8a99b337bd93f88a024ba1f96d19bada`。
-- 两个文件都已确认 ZIP 完整性；源码内版本为 `1.9.5` / `versionCode 24`，并含 V15 条件逻辑。
+- 最新成功构建：Run #175，应用版本 `1.9.7` / `versionCode 26`
+  <https://github.com/tryq123333/-/actions/runs/39062307314>
+- Run #175 工作流触发提交：`7a59a24eca30683f24a6a60e45f1a97774e7ba09`
+- 源码归档同步后 main HEAD（本次交接日志更新前）：`692998654866d7bc59cb8bc7d81c36dbb6767f6f`
+- Run #175 的 per-song A/B patch、APK 编译、JVM 单元测试、APK/source ZIP 上传及源码同步全部 success。
+- Run #175 构建产物：APK artifact ID `12111971161`；source ZIP artifact ID `12112240438`。
+- 本地 APK：`/mnt/data/LuokeAutoPiano_1.9.7.apk`，109,926 bytes，SHA-256 `bb5a5c8abb767782fb91f9d997c53202f409fab55a68a1b5adda1963a7db3e11`。
+- 本地源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.7_source.zip`，118,081 bytes，SHA-256 `ad613fe8c0e87326161dd78cb4002e5a505a09190db7bace6b9255f373f07b68`。
+- 两个文件均通过 ZIP 完整性检查；源码确认版本 `1.9.7` / `versionCode 26`，并含 V17 按曲目保存 A/B 的实现和测试。
 - 重要：构建与 JVM 测试通过不代表 Android 真机验证。真机结果必须由用户实际安装测试后再记录。
 
 ## 2. 项目是什么
@@ -383,3 +383,16 @@
 - Run #168 <https://github.com/tryq123333/-/actions/runs/39039809176> 成功。V15 patch、Android APK 编译、JVM 单元测试、APK/source ZIP 上传及源码归档同步均 success。工作流提交 `06ae72b9b9873b6c0d4150de45dd1fda6528de25`；main HEAD `1d828c0308328fea972c075509cb2094eac3d9b1`；APK artifact ID `12104085252`；source ZIP artifact ID `12103264523`。
 - APK `/mnt/data/LuokeAutoPiano_1.9.5.apk`：108,790 bytes，SHA-256 `dfc2d1eeb9a44436ef8cbc20deae84f600aec8f0b334b1b273bdf44d2ce52e57`。源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.5_source.zip`：116,025 bytes，SHA-256 `92267583ccc5d013722628bd830a51ac8a99b337bd93f88a024ba1f96d19bada`。两份交付文件 ZIP 完整性检查通过。
 - 真机验证仍待用户确认：关闭练习并自动播放时，渐淡线处不应出现额外大圈；开启练习后，仍应在播放线处显示练习圆圈并等待正确的游戏键触控后继续。音符渐淡/移动以及其他控件位置不得改变。
+
+
+## 37. 2026-10-18 V1.9.7：每首曲目独立保留 A/B 循环时间 V17
+
+- 用户要求：每首歌在 A/B 循环对话框设置时间后，切走再切回来时应保留该歌曲之前的 A/B 起止点；除非对这首歌点击“重置 A/B”，否则不应被切歌覆盖。
+- 根因：`selectImportedSong()` 在每次切曲时无条件执行 `putLong(KEY_RANGE_START_MS, 0L)`、`putLong(KEY_RANGE_END_MS, -1L)`，两个全局偏好值被重置，因此曲目间互相覆盖。
+- 新增补丁 `.github/scripts/apply_song_specific_ab_range_persistence_v17.py`，在 V16 外圈绘制清理后执行。它新增 `SongAbRangeKeys`，用曲目绝对路径的 SHA-256 为 start/end 保存稳定且基本无碰撞的独立 SharedPreferences key；新增活动缓存所属曲目的标记 `practice_range_active_song_path`。每次加载/切换曲目时，先将上一首歌当前全局 A/B 值写入该歌的私有 key，再把目标曲目独立保存的值载入活动缓存；新曲目未保存时使用 `A=0, B=-1`（UI 将 B 显示为整首时长）。
+- 升级迁移：如果旧版没有活动曲目标记，首读时将现有全局 A/B 值归属到当前选择曲目；切换到另一首后再独立保存，尽量保留用户升级前当前曲目的设置。
+- “重置 A/B”原有交互保持不变：在对话框里把 A/B 输入设置为整首范围并点击“完成”后，只修改当前曲目的 active range；下一次切歌时，这一重置结果将仅保存到该曲目的专用键，其他曲目设置不受影响。删除导入曲目时同时清除对应的专属 A/B key，避免删除再导入时继承旧数据。
+- 新增 `SongAbRangeKeysTest.java`，验证相同路径稳定产生相同 key、不同路径产生不同 key、A 起点和 B 终点 key 相互独立。构建脚本在服务的当前曲目读取、直接开始演奏、曲目选择及删除路径中对齐 active range owner；版本更新为 `1.9.7` / `versionCode 26`。
+- Run #175 <https://github.com/tryq123333/-/actions/runs/39062307314> 成功：V17 service patch audit、Android APK 编译、JVM 单元测试、APK/source ZIP 上传和源码同步均 success。工作流触发提交 `7a59a24eca30683f24a6a60e45f1a97774e7ba09`；APK artifact ID `12111971161`；source ZIP artifact ID `12112240438`。源码归档 blob SHA `7e5dffc46141a5635fdc0609c5efdc3126167fcd`。
+- APK `/mnt/data/LuokeAutoPiano_1.9.7.apk` 为 109,926 bytes，SHA-256 `bb5a5c8abb767782fb91f9d997c53202f409fab55a68a1b5adda1963a7db3e11`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.7_source.zip` 为 118,081 bytes，SHA-256 `ad613fe8c0e87326161dd78cb4002e5a505a09190db7bace6b9255f373f07b68`。交付文件完整性检查通过。
+- 真机验证待用户完成：① 给歌曲 A 设置 A/B 时间，切到歌曲 B 并设置不同区间；② 返回歌曲 A，确认 A 的时间恢复；③ 返回歌曲 B，确认 B 的时间恢复；④ 仅在歌曲 A 上点击重置并完成保存，再切走回来，确认 A 恢复整首范围而歌曲 B 之前的范围未改变。自动测试不替代上述手机实测。
