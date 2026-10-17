@@ -36,6 +36,7 @@ checks = {
     "practice playhead medallion remains": "boolean practiceGroupNote = practiceWaiting && practiceGroupPitches.contains(pitch)" in note_check
         and "if (playheadFocusNote)" in note_check,
     "practice waiting ring still remains": "practiceNeedsTap ? 0x9f48e69e : 0x6048e69e" in note_check,
+    "outermost standalone stroke ring removed": "canvas.drawCircle(playheadX, badge.centerY(), iconSize * 0.82f, paint);" not in note_check,
     "regular playback still uses playhead only when practice enabled": "playheadFocusNote = practiceGroupNote || normalPlayheadNote" in note_check,
     "app bumped to 1.9.5": "versionCode 24" in build_check and "versionName '1.9.5'" in build_check,
 }
