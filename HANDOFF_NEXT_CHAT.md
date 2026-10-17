@@ -8,17 +8,17 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 最新源码归档 blob SHA：`6d773b217864234fc373360587a6c1f95701f012`
+- 最新源码归档 blob SHA：`2fed7cb29eb904018bf7ce5e352ff88b05b0fe49`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新成功构建：Run #162，应用版本 `1.9.4` / `versionCode 23`
-  <https://github.com/tryq123333/-/actions/runs/38988115264>
-- Run #162 工作流提交：`b70cd938d8844b9366962d60b3d091db918f2821`
-- 源码归档同步后 main HEAD：`e84c31b40ef461f66a2d226b5152a3105f0a37e6`
-- Run #162 已确认通过：V14 补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/源码 ZIP 上传与源码同步均 success。
-- Run #162 构建产物：APK artifact ID `12084450157`；source ZIP artifact ID `12084345354`。
-- 本地交付 APK：`/mnt/data/LuokeAutoPiano_1.9.4.apk`，108,810 bytes，SHA-256 `b2d46e054ad04787c7f808c69f3390de934e40ed9c482a24b33b1c9ca169354a`。
-- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.4_source.zip`，116,000 bytes，SHA-256 `6bcc1dd033e19b7381842f058af22cdb519c4e0155159f8eb240501cba33b43b`。
-- 两个文件均通过 ZIP 完整性检查。源码 ZIP 已确认 V14 圆圈焦点逻辑、按钮换位、加大引导触控区以及 `1.9.4` 版本信息。
+- 最新成功构建/兼容性验证：Run #164，应用版本 `1.9.4` / `versionCode 23`
+  <https://github.com/tryq123333/-/actions/runs/38988436444>
+- Run #164 的构建触发提交：`83e178218ad420832e7864475a7ccd3785edddc8`
+- 源码归档同步后 main HEAD：`0894ff12400b507367abe22100fedf113f054364`
+- Run #164 已确认通过：旧 V12 审计兼容 V14 更大引导圈/播放线焦点绘制表达式，V13 八度点位映射，V14 引导圈/普通播放圆圈/按钮位置更换；Android `assembleDebug`、JVM 单元测试、APK/源码 ZIP 上传和同步全部 success。
+- Run #164 构建产物：APK artifact ID `12084400388`；源码 ZIP artifact ID `12084425330`。
+- 本地交付 APK：`/mnt/data/LuokeAutoPiano_1.9.4.apk`，108,810 bytes，SHA-256 `a07ec633d2bae130296800a0d259047b5e37fdbc5c05be726f20805ae8b1d692`。
+- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.4_source.zip`，116,000 bytes，SHA-256 `a29a74b0c20df4093e9b37459619eb0b8ce2615a5602b7baa91802f311dea7c2`。
+- 两个文件均通过 ZIP 完整性检查，源码确认版本 `1.9.4` / `versionCode 23` 和 V14 标记。
 - 重要：构建/JVM 测试通过不代表已完成 Android 真机验证。真机结果必须由用户实际安装测试后再记录。
 
 ## 2. 项目是什么
@@ -364,3 +364,12 @@
 - 版本更新为 `1.9.4` / `versionCode 23`。Run #162 <https://github.com/tryq123333/-/actions/runs/38988115264> 成功；V14 补丁应用、APK 编译、JVM 单元测试、APK/source ZIP 上传和源码同步全部 success。workflow commit `b70cd938d8844b9366962d60b3d091db918f2821`，归档同步后 main HEAD `e84c31b40ef461f66a2d226b5152a3105f0a37e6`。APK artifact ID `12084450157`；source ZIP artifact ID `12084345354`。
 - 最终 APK `/mnt/data/LuokeAutoPiano_1.9.4.apk`，108,810 bytes，SHA-256 `b2d46e054ad04787c7f808c69f3390de934e40ed9c482a24b33b1c9ca169354a`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.4_source.zip`，116,000 bytes，SHA-256 `6bcc1dd033e19b7381842f058af22cdb519c4e0155159f8eb240501cba33b43b`。两份文件均通过完整性检查，并在解包后的 `LuokeAutoPiano/app/build.gradle` 中核对 `versionCode 23` 和 `versionName 1.9.4`。
 - 真机验证待用户完成：① 新引导圈是否够大且没有遮挡相邻游戏键；② 练习关闭时播放线扫到每个音符时是否出现轻微圆圈和居中图标；③ 练习开启等待时仍有更明显圆圈、点击后下一音符才继续；④ 练习按钮在左上 A/B 旧位置、A/B 在速度调节条下方的新位置，二者点击和长按编辑仍有效。
+
+
+## 35. 2026-10-17 V14 后续重建兼容性：更新 V12 审计条件
+
+- Run #163 在交接日志更新后触发的完整重建中，于 V12 脚本的 feature audit 失败：旧审计仍要求引导圈基准为 `dp(46)` / 最近间距系数 `0.78`，且要求 NoteRollView 仍使用 `practiceGroupNote ? playheadX` 作为居中变量；这些断言已被 V14 的 `dp(60)` / `0.88` 和 `playheadFocusNote ? playheadX` 替代。
+- 已更新 `.github/scripts/apply_practice_visual_and_tap_v12.py` 的 audit：既接受 V12 原始几何与绘制变量，也接受 V14 已放大的引导圈及播放线焦点变量。该改动只更新历史构建审计兼容性，不更改 App 运行逻辑。
+- 后续重建 Run #164 <https://github.com/tryq123333/-/actions/runs/38988436444> 成功：V12 audit、V13、V14、APK 编译、JVM 测试与产物同步全部通过。这确认源归档中已经应用的 V14 改动可以在更新审计脚本后再次自动构建。
+- Run #164 APK artifact ID `12084400388`；source ZIP artifact ID `12084425330`。APK SHA-256 `a07ec633d2bae130296800a0d259047b5e37fdbc5c05be726f20805ae8b1d692`；源码 ZIP SHA-256 `a29a74b0c20df4093e9b37459619eb0b8ce2615a5602b7baa91802f311dea7c2`。
+- 真机测试仍待用户反馈：确认引导圈是否足够大、正常播放的当前音符是否在播放线位置显示同款圆圈、练习开启后等待行为是否保持、A/B 循环与练习按钮换位后各自点击/长按功能是否正常。
