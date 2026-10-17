@@ -72,12 +72,14 @@ if MARKER not in tests:
     )
 
 # Slightly enlarge normal roll icons so the octave dots remain visible on narrow mobile layouts.
-old_size = "float iconSize = practiceGroupNote ? 18 * density : Math.min(16 * density,"
-new_size = "float iconSize = practiceGroupNote ? 20 * density : Math.min(18 * density,"
-if old_size in note:
-    note = note.replace(old_size, new_size, 1)
-elif new_size not in note:
-    raise SystemExit("Unable to find note icon size expression")
+# V14 uses a shared playhead-focus expression and manages the icon size itself.
+if "PRACTICE_ROLL_PLAYHEAD_RING_BUTTON_SWAP_V14" not in note:
+    old_size = "float iconSize = practiceGroupNote ? 18 * density : Math.min(16 * density,"
+    new_size = "float iconSize = practiceGroupNote ? 20 * density : Math.min(18 * density,"
+    if old_size in note:
+        note = note.replace(old_size, new_size, 1)
+    elif new_size not in note:
+        raise SystemExit("Unable to find note icon size expression")
 
 if "gameKeyAtlasCellForPitch(pitch)" not in note:
     raise SystemExit("Note roll no longer uses pitch-aware atlas cells")
