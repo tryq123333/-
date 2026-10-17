@@ -8,18 +8,18 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 最新源码归档 blob SHA：`2fed7cb29eb904018bf7ce5e352ff88b05b0fe49`
+- 当前源码归档 blob SHA：`8b0e28c0f528c62c81020d19d7f077af588f60f6`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新成功构建/兼容性验证：Run #164，应用版本 `1.9.4` / `versionCode 23`
-  <https://github.com/tryq123333/-/actions/runs/38988436444>
-- Run #164 的构建触发提交：`83e178218ad420832e7864475a7ccd3785edddc8`
-- 源码归档同步后 main HEAD：`0894ff12400b507367abe22100fedf113f054364`
-- Run #164 已确认通过：旧 V12 审计兼容 V14 更大引导圈/播放线焦点绘制表达式，V13 八度点位映射，V14 引导圈/普通播放圆圈/按钮位置更换；Android `assembleDebug`、JVM 单元测试、APK/源码 ZIP 上传和同步全部 success。
-- Run #164 构建产物：APK artifact ID `12084400388`；源码 ZIP artifact ID `12084425330`。
-- 本地交付 APK：`/mnt/data/LuokeAutoPiano_1.9.4.apk`，108,810 bytes，SHA-256 `a07ec633d2bae130296800a0d259047b5e37fdbc5c05be726f20805ae8b1d692`。
-- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.4_source.zip`，116,000 bytes，SHA-256 `a29a74b0c20df4093e9b37459619eb0b8ce2615a5602b7baa91802f311dea7c2`。
-- 两个文件均通过 ZIP 完整性检查，源码确认版本 `1.9.4` / `versionCode 23` 和 V14 标记。
-- 重要：构建/JVM 测试通过不代表已完成 Android 真机验证。真机结果必须由用户实际安装测试后再记录。
+- 最新成功构建：Run #168，应用版本 `1.9.5` / `versionCode 24`
+  <https://github.com/tryq123333/-/actions/runs/39039809176>
+- Run #168 工作流提交：`06ae72b9b9873b6c0d4150de45dd1fda6528de25`
+- 当前 main HEAD（归档同步后）：`1d828c0308328fea972c075509cb2094eac3d9b1`
+- Run #168 的 V15 patch、APK 编译、JVM 单元测试、APK/source ZIP 打包上传与源码同步全部 success。
+- Run #168 构建产物：APK artifact ID `12104085252`；source ZIP artifact ID `12103264523`。
+- 最终 APK：`/mnt/data/LuokeAutoPiano_1.9.5.apk`，108,790 bytes，SHA-256 `dfc2d1eeb9a44436ef8cbc20deae84f600aec8f0b334b1b273bdf44d2ce52e57`。
+- 最终源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.5_source.zip`，116,025 bytes，SHA-256 `92267583ccc5d013722628bd830a51ac8a99b337bd93f88a024ba1f96d19bada`。
+- 两个文件都已确认 ZIP 完整性；源码内版本为 `1.9.5` / `versionCode 24`，并含 V15 条件逻辑。
+- 重要：构建与 JVM 测试通过不代表 Android 真机验证。真机结果必须由用户实际安装测试后再记录。
 
 ## 2. 项目是什么
 
@@ -373,3 +373,13 @@
 - 后续重建 Run #164 <https://github.com/tryq123333/-/actions/runs/38988436444> 成功：V12 audit、V13、V14、APK 编译、JVM 测试与产物同步全部通过。这确认源归档中已经应用的 V14 改动可以在更新审计脚本后再次自动构建。
 - Run #164 APK artifact ID `12084400388`；source ZIP artifact ID `12084425330`。APK SHA-256 `a07ec633d2bae130296800a0d259047b5e37fdbc5c05be726f20805ae8b1d692`；源码 ZIP SHA-256 `a29a74b0c20df4093e9b37459619eb0b8ce2615a5602b7baa91802f311dea7c2`。
 - 真机测试仍待用户反馈：确认引导圈是否足够大、正常播放的当前音符是否在播放线位置显示同款圆圈、练习开启后等待行为是否保持、A/B 循环与练习按钮换位后各自点击/长按功能是否正常。
+
+
+## 36. 2026-10-17 V1.9.5：练习关闭时移除播放线大圈 V15
+
+- 用户提出：滚动音符界面不开练习时，音符到渐淡/播放线时出现的大圈不要显示；练习开启时原有的大圈与等待视觉保持。
+- 新增脚本 `.github/scripts/apply_practice_roll_normal_ring_v15.py`，在 V14 后执行，marker `PRACTICE_NORMAL_PLAYHEAD_RING_ONLY_IN_PRACTICE_V15`。将 `NoteRollView` 中 `normalPlayheadNote` 条件改为 `practiceModeEnabled && playing && Math.abs(noteStart - positionMicros) <= 70_000L`。因此常规自动播放且练习关闭时不再走大圈/焦点图标路径；开启练习时仍保留 V14 播放线焦点效果，且在真正的 practice waiting 状态继续使用更醒目的圆圈。
+- 应用版本升级为 `1.9.5` / `versionCode 24`。为了使未来从 V14 源码归档完整重建不因 V14 审计要求旧表达式而失败，更新 V14 audit 接受原始条件与 V15 的 practiceModeEnabled 限定条件。
+- Run #168 <https://github.com/tryq123333/-/actions/runs/39039809176> 成功。V15 patch、Android APK 编译、JVM 单元测试、APK/source ZIP 上传及源码归档同步均 success。工作流提交 `06ae72b9b9873b6c0d4150de45dd1fda6528de25`；main HEAD `1d828c0308328fea972c075509cb2094eac3d9b1`；APK artifact ID `12104085252`；source ZIP artifact ID `12103264523`。
+- APK `/mnt/data/LuokeAutoPiano_1.9.5.apk`：108,790 bytes，SHA-256 `dfc2d1eeb9a44436ef8cbc20deae84f600aec8f0b334b1b273bdf44d2ce52e57`。源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.5_source.zip`：116,025 bytes，SHA-256 `92267583ccc5d013722628bd830a51ac8a99b337bd93f88a024ba1f96d19bada`。两份交付文件 ZIP 完整性检查通过。
+- 真机验证仍待用户确认：关闭练习并自动播放时，渐淡线处不应出现额外大圈；开启练习后，仍应在播放线处显示练习圆圈并等待正确的游戏键触控后继续。音符渐淡/移动以及其他控件位置不得改变。
