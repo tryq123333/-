@@ -8,17 +8,17 @@
 - GitHub 仓库：<https://github.com/tryq123333/->
 - 默认分支：`main`
 - Android 源码归档（仓库根目录）：`LuokeAutoPiano.zip`
-- 最新源码归档 blob SHA：`7739a203bc154ad527da1215c6eba8e41cb20a90`
+- 最新源码归档 blob SHA：`6d773b217864234fc373360587a6c1f95701f012`
 - 自动构建工作流：<https://github.com/tryq123333/-/blob/main/.github/workflows/build-apk.yml>
-- 最新成功构建：Run #158，应用版本 `1.9.3` / `versionCode 22`
-  <https://github.com/tryq123333/-/actions/runs/38973902955>
-- Run #158 工作流提交：`6e2b7e0a284784695c740c178babe8be03f77a51`
-- 源码归档同步后 main HEAD：`05de3ef8ad735c9ef5e3b1efe40f31221835b1ad`
-- Run #158 已确认通过：V11/V12/V13 补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/源码 ZIP 上传与源码同步均 success。
-- Run #158 产物：APK artifact ID `12078450889`，source ZIP artifact ID `12078565812`。
-- 本地交付 APK：`/mnt/data/LuokeAutoPiano_1.9.3.apk`，108,666 bytes，SHA-256 `d579f48affa347e5d31625674dda85ef4e07bc679e4d60263c23f3cdb57cbb96`。
-- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.3_source.zip`，115,776 bytes，SHA-256 `484ad55a27d49ddeace92f053ffcdaa764d16bc04aad6711118365e5684b11dc`。
-- 两个最终文件均已检查 ZIP 完整性；源码 ZIP 已核对版本号与正确映射表。
+- 最新成功构建：Run #162，应用版本 `1.9.4` / `versionCode 23`
+  <https://github.com/tryq123333/-/actions/runs/38988115264>
+- Run #162 工作流提交：`b70cd938d8844b9366962d60b3d091db918f2821`
+- 源码归档同步后 main HEAD：`e84c31b40ef461f66a2d226b5152a3105f0a37e6`
+- Run #162 已确认通过：V14 补丁、Android `assembleDebug`、JVM `testDebugUnitTest`、APK/源码 ZIP 上传与源码同步均 success。
+- Run #162 构建产物：APK artifact ID `12084450157`；source ZIP artifact ID `12084345354`。
+- 本地交付 APK：`/mnt/data/LuokeAutoPiano_1.9.4.apk`，108,810 bytes，SHA-256 `b2d46e054ad04787c7f808c69f3390de934e40ed9c482a24b33b1c9ca169354a`。
+- 本地交付源码 ZIP：`/mnt/data/LuokeAutoPiano_1.9.4_source.zip`，116,000 bytes，SHA-256 `6bcc1dd033e19b7381842f058af22cdb519c4e0155159f8eb240501cba33b43b`。
+- 两个文件均通过 ZIP 完整性检查。源码 ZIP 已确认 V14 圆圈焦点逻辑、按钮换位、加大引导触控区以及 `1.9.4` 版本信息。
 - 重要：构建/JVM 测试通过不代表已完成 Android 真机验证。真机结果必须由用户实际安装测试后再记录。
 
 ## 2. 项目是什么
@@ -352,3 +352,15 @@
 - Run #158 成功：<https://github.com/tryq123333/-/actions/runs/38973902955>。V12 审计、V13 补丁、APK 编译、JVM 单元测试、APK/source ZIP 上传和源码同步均 success。工作流提交 `6e2b7e0a284784695c740c178babe8be03f77a51`，同步 main HEAD `05de3ef8ad735c9ef5e3b1efe40f31221835b1ad`。APK artifact ID `12078450889`；source ZIP artifact ID `12078565812`。
 - APK `/mnt/data/LuokeAutoPiano_1.9.3.apk` 为 108,666 bytes，SHA-256 `d579f48affa347e5d31625674dda85ef4e07bc679e4d60263c23f3cdb57cbb96`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.3_source.zip` 为 115,776 bytes，SHA-256 `484ad55a27d49ddeace92f053ffcdaa764d16bc04aad6711118365e5684b11dc`。两份文件已通过 ZIP 完整性检查；源码已核对 `versionCode 22` / `versionName 1.9.3` 和 V13 映射表。
 - 仍需手机实测：更新到 1.9.3 后检查 A2 低音显示下点、E3–B3 中音无点、C4–E4 高音上点；确认九键图案与实际游戏位置一一对应，特别是高音 1/2/3 与低音 6。若用户觉得图案形状仍不对应，需请用户把 chat 仓库那张原始参考图直接上传到对话，以便实际视觉比对，不能猜测继续改图集映射。
+
+
+## 34. 2026-10-17 V1.9.4：加大游戏引导圈、正常播放播放线圆圈与交换控件位置 V14
+
+- 用户三项要求：① 游戏实际按键位置上的练习引导圈再大些；② 练习开启时，音符到达渐淡/播放线会出现的圆圈效果很好，普通自动播放也要有同样效果；③ 将滚动音符界面上的 A/B 循环与练习按钮位置交换。
+- 新补丁 `.github/scripts/apply_practice_roll_polish_v14.py`，在 V13 高低音点位映射脚本之后运行，标记 `PRACTICE_ROLL_PLAYHEAD_RING_BUTTON_SWAP_V14`。V13 脚本同时加了兼容条件：如果 NoteRollView 已包含 V14 标记，则跳过 V13 对旧 practiceGroupNote icon-size 表达式的再修改，不会使 V14 完整源码归档的后续重建报错。
+- 引导窗口基准边长由 `dp(46)` 提高至 `dp(60)`，按最近校准键距离的 0.88 比例限制以减少相邻键重叠；外边缘描边提高到 2.6dp。具体真机视觉大小仍由校准键间距封顶控制。
+- NoteRollView 另加 `normalPlayheadNote`：当正常播放的音符起始时刻距当前播放游标不超过约 70ms 时，同样将游戏键图标居中绘制在播放线上，并用低透明度绿圈/细描边强调；练习等待状态继续用更醒目的颜色。音符组真实等待、练习 gate、播放线通过后的淡出以及序列触控队列均保持不变。
+- A/B 循环 chip 从原来的 y=52–69dp 移至速度滑条下面 y=96–114dp；练习 chip 则移到原 A/B 所在的 y=52–69dp，⏮︎ 回起点继续留在练习 chip 右侧。触摸命中逻辑一起换位：顶端左侧触发练习，速度条下方左侧触发 A/B/完成；速度条的底边命中范围收紧到 y<96dp，避免与新的 A/B 区域重叠。
+- 版本更新为 `1.9.4` / `versionCode 23`。Run #162 <https://github.com/tryq123333/-/actions/runs/38988115264> 成功；V14 补丁应用、APK 编译、JVM 单元测试、APK/source ZIP 上传和源码同步全部 success。workflow commit `b70cd938d8844b9366962d60b3d091db918f2821`，归档同步后 main HEAD `e84c31b40ef461f66a2d226b5152a3105f0a37e6`。APK artifact ID `12084450157`；source ZIP artifact ID `12084345354`。
+- 最终 APK `/mnt/data/LuokeAutoPiano_1.9.4.apk`，108,810 bytes，SHA-256 `b2d46e054ad04787c7f808c69f3390de934e40ed9c482a24b33b1c9ca169354a`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.4_source.zip`，116,000 bytes，SHA-256 `6bcc1dd033e19b7381842f058af22cdb519c4e0155159f8eb240501cba33b43b`。两份文件均通过完整性检查，并在解包后的 `LuokeAutoPiano/app/build.gradle` 中核对 `versionCode 23` 和 `versionName 1.9.4`。
+- 真机验证待用户完成：① 新引导圈是否够大且没有遮挡相邻游戏键；② 练习关闭时播放线扫到每个音符时是否出现轻微圆圈和居中图标；③ 练习开启等待时仍有更明显圆圈、点击后下一音符才继续；④ 练习按钮在左上 A/B 旧位置、A/B 在速度调节条下方的新位置，二者点击和长按编辑仍有效。
