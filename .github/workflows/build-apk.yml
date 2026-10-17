@@ -791,6 +791,9 @@ jobs:
       - name: Correct high and low octave dots in game-key icons
         run: python .github/scripts/apply_practice_octave_dots_v13.py
 
+      - name: Enlarge practice guides, ring normal playback notes and swap AB/practice controls
+        run: python .github/scripts/apply_practice_roll_polish_v14.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
