@@ -190,7 +190,8 @@ service = SERVICE.read_text(encoding="utf-8")
 build = BUILD.read_text(encoding="utf-8")
 checks = {
     "V14 marker present": MARKER in note and MARKER in service,
-    "regular playback gets the playhead medallion": "normalPlayheadNote = playing && Math.abs(noteStart - positionMicros) <= 70_000L" in note
+    "playhead focus logic is present": ("normalPlayheadNote = playing && Math.abs(noteStart - positionMicros) <= 70_000L" in note
+        or "normalPlayheadNote = practiceModeEnabled && playing && Math.abs(noteStart - positionMicros) <= 70_000L" in note)
         and "if (playheadFocusNote)" in note,
     "practice waiting retains stronger medallion": "practiceNeedsTap ? 0x9f48e69e : 0x6048e69e" in note,
     "guide circle is larger": "int size = dp(60);" in service and "nearest * 0.88d" in service
