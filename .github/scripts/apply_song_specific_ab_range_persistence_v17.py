@@ -222,6 +222,9 @@ if MARKER not in service:
         "clear active range owner when deleting current song",
     )
 
+# Persist service modifications before writing helper/test files.
+SERVICE.write_text(service, encoding="utf-8")
+
 # Always write helper and tests, so the patch can repair a partially materialized archive.
 HELPER.parent.mkdir(parents=True, exist_ok=True)
 TEST.parent.mkdir(parents=True, exist_ok=True)
