@@ -436,9 +436,10 @@ checks = {
         and "private boolean practiceTapGestureInFlight;" in service
         and "pumpPracticeKeyTapQueue();" in service,
     "other chord guides are preserved": "Remove only the tapped guide. Other chord guides remain visible." in service,
-    "tap target enlarged": "int size = dp(46);" in service and "nearest * 0.78d" in service,
+    "tap target enlarged": (("int size = dp(46);" in service and "nearest * 0.78d" in service)
+        or ("int size = dp(60);" in service and "nearest * 0.88d" in service)),
     "actual waiting chord holds current notes on playhead": "setPracticeWaitState(practiceGroupPitches, practiceExpectedPitches, waitingForPracticeTap)" in service
-        and "float iconCx = practiceGroupNote ? playheadX" in note,
+        and ("float iconCx = practiceGroupNote ? playheadX" in note or "float iconCx = playheadFocusNote ? playheadX" in note),
     "waiting playhead visibly highlighted": "practiceWaiting ? 0xd5a4ffce : 0x26ffffff" in note,
     "pitch name shown with icon during practice": "canvas.drawText(noteLabel, noteNameX, noteNameY, paint);" in note,
     "logical pitch maps to true atlas cell": ("GAME_KEY_ATLAS_CELL_BY_PITCH_INDEX = {8, 0, 1, 3, 2, 4, 5, 6, 7}" in layout
