@@ -797,6 +797,9 @@ jobs:
       - name: Hide large normal-playback ring unless practice is enabled
         run: python .github/scripts/apply_practice_roll_normal_ring_v15.py
 
+      - name: Remove outer standalone playhead ring layer
+        run: python .github/scripts/apply_practice_roll_outer_ring_v16.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
