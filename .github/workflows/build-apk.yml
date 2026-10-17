@@ -800,6 +800,9 @@ jobs:
       - name: Remove outer standalone playhead ring layer
         run: python .github/scripts/apply_practice_roll_outer_ring_v16.py
 
+      - name: Preserve A/B ranges separately for each song
+        run: python .github/scripts/apply_song_specific_ab_range_persistence_v17.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
