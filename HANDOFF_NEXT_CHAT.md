@@ -396,3 +396,15 @@
 - Run #175 <https://github.com/tryq123333/-/actions/runs/39062307314> 成功：V17 service patch audit、Android APK 编译、JVM 单元测试、APK/source ZIP 上传和源码同步均 success。工作流触发提交 `7a59a24eca30683f24a6a60e45f1a97774e7ba09`；APK artifact ID `12111971161`；source ZIP artifact ID `12112240438`。源码归档 blob SHA `7e5dffc46141a5635fdc0609c5efdc3126167fcd`。
 - APK `/mnt/data/LuokeAutoPiano_1.9.7.apk` 为 109,926 bytes，SHA-256 `bb5a5c8abb767782fb91f9d997c53202f409fab55a68a1b5adda1963a7db3e11`；源码 ZIP `/mnt/data/LuokeAutoPiano_1.9.7_source.zip` 为 118,081 bytes，SHA-256 `ad613fe8c0e87326161dd78cb4002e5a505a09190db7bace6b9255f373f07b68`。交付文件完整性检查通过。
 - 真机验证待用户完成：① 给歌曲 A 设置 A/B 时间，切到歌曲 B 并设置不同区间；② 返回歌曲 A，确认 A 的时间恢复；③ 返回歌曲 B，确认 B 的时间恢复；④ 仅在歌曲 A 上点击重置并完成保存，再切走回来，确认 A 恢复整首范围而歌曲 B 之前的范围未改变。自动测试不替代上述手机实测。
+
+
+## 38. 2026-10-21 V1.9.9：修复重置校准入口、增加可选 AB 循环、恢复整曲音符显示 V19
+
+- 本轮在当前 main 版本之后追加自动补丁：`.github/scripts/apply_ab_repeat_calibration_note_visibility_v19.py`；工作流 `.github/workflows/build-apk.yml` 已将该步骤接在 V18 每曲音域检测步骤之后、Gradle 构建之前。补丁标记：`AB_REPEAT_CALIBRATION_NOTE_VISIBILITY_V19`。改动以构建时应用到根目录 `LuokeAutoPiano.zip` 中的源码为准。
+- 校准重置：`MainActivity` 清除当前乐器校准坐标后，会通知 `MusicAccessibilityService.onCalibrationReset()` 重建悬浮控制面板。面板根据清空后的校准状态重新显示“校准”入口；“准备/重新校准”操作也会刷新面板并给出明确提示。实际坐标采集仍需切回游戏后点悬浮面板的“校准”，不能在主应用页面采集游戏按键位置。
+- AB 播放：新增独立偏好键 `ab_loop_repeat_enabled`，默认关闭；滚动音符界面的 ♻️ 控件只在 A/B 循环开启（高亮）时显示，默认状态为低对比度，启用后改为柔和绿色高亮。点按切换“播完一次停止”与“到 B 后返回 A 继续循环”。关闭 A/B 时同时清除重复开关；设置对话框的 AB 状态更改也会同步这项设置。
+- 播放线程：A/B 启用后，即使 B 点之后没有音符，也会等待播放游标到达 B，再根据 ♻️ 状态决定返回 A 或自然停止；不再把“启用 A/B”直接等同于“无限循环”。
+- 音符显示：A/B 关闭时，音符绘制改为按整首歌的时长计算音块末端，并不再用已保存的 A/B 时间过滤可见音符；A/B 时间标记仍保留以便再次启用时使用。
+- 新增 `AbLoopRepeatPolicy.java` 与 `AbLoopRepeatPolicyTest.java`，单元测试覆盖只有 A/B 与重复播放同时开启才循环、重复关闭时单次结束、A/B 关闭时不循环。版本号目标为 `1.9.9` / `versionCode 28`。
+- 本地使用当前可下载的 V1.9.7 源码归档做了静态补丁演练：脚本连续应用两次仍通过，11 项后置条件检查全部通过，证明脚本在该基线下幂等。完整 Gradle 测试无法在当前容器启动，因为 Gradle Wrapper 下载 `https://services.gradle.org/distributions/gradle-8.14.3-bin.zip` 时遇到网络 `UnknownHostException`。
+- 已把 V19 脚本和工作流接线推送到 main：脚本提交 `45e4fab1e7f01a5879956af60237fce3f7cdc1c0`；工作流提交 `2c0d4c13e6e37d1036bd5f431b64362a3110af72`。截至此条日志更新时，尚未从可用的检查接口确认该次 GitHub Actions 的最终 APK/JVM 测试状态，也未确认 V19 源码 ZIP 已由工作流同步回 main。因此**不要把构建或手机真机验证描述为已通过**；后续首先检查该提交触发的 Actions 结果，再确认 APK 和源码 ZIP 产物。
