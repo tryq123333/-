@@ -867,6 +867,10 @@ jobs:
           git add LuokeAutoPiano.zip
           if ! git diff --cached --quiet; then
             git commit -m "Sync seekable music overlay source [skip ci]"
+            # Rebase the generated archive commit onto the latest main before pushing.
+            # This avoids a non-fast-forward failure if another commit lands during the build.
+            git fetch origin main
+            git rebase origin/main
             git push origin HEAD:main
           else
             echo "No source archive changes to sync."
