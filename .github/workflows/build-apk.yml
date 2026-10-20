@@ -806,6 +806,9 @@ jobs:
       - name: Add per-song audio-range check toggle
         run: python .github/scripts/apply_song_range_check_toggle_v18.py
 
+      - name: Fix calibration refresh, A/B repeat control and whole-song note visibility
+        run: python .github/scripts/apply_ab_repeat_calibration_note_visibility_v19.py
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
