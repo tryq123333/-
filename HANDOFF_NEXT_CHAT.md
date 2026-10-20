@@ -414,3 +414,11 @@
 - 根据用户要求，需验证第 38 节 V19 补丁后的 APK 构建结果；此前的本地 Gradle 构建因下载 Gradle 时网络 DNS 失败，不能作为编译成功证据。
 - 为触发主分支自动构建，在本日志中记录本次验证请求。该提交有意不使用 `[skip ci]`，以便 `.github/workflows/build-apk.yml` 的 main push 触发器运行。
 - 交付规则：只有在 GitHub Actions 明确显示构建成功，并且产物列表里确有 APK artifact 后，才告知用户 APK 已编译完成；若失败，应检查作业步骤/日志，修复后重新构建。不可将“提交存在”或“运行已启动”称为构建成功。
+
+
+## 40. 2026-10-21 V1.9.9：修复完整构建被旧 V2 补丁标记误判阻断
+
+- 检查 Run #180（<https://github.com/tryq123333/-/actions/runs/39505981264>）发现：步骤“Apply song-specific note UI, transpose and gesture fixes”执行 `.github/scripts/apply_song_specific_roll_ui_v2.py` 失败，精确错误为 `Missing MusicAccessibilityService postcondition: per-song pitch range summary`；后续 Gradle 和 APK 上传步骤均被跳过，所以此运行未产出可交付 APK。
+- 原因：旧脚本把添加 `describeSongRange(File, int)` 帮助方法包在 `if MARKER not in service` 内。若服务源码已含 V2 marker、但帮助方法缺失，脚本跳过整个修改块，却仍无条件要求该方法存在，不能自我修复。
+- 已在脚本末尾校验前加入独立的幂等修复：只在帮助方法缺失时，插入 `describeSongRange` 到曲目选择方法前；保留既有 marker 和其他已应用改动。修复提交：`e95177e1c1dc54794a772e3dacebb6f17b12d5b7`。
+- 下一步必须核查修复提交触发的 Actions Run；仅当 APK build、JVM tests、upload APK 和 source ZIP 相关步骤均成功，且 artifact API 返回 APK 文件时，才把 APK 交给用户。不要将此修复提交视为构建成功。
