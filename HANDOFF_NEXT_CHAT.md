@@ -422,3 +422,11 @@
 - 原因：旧脚本把添加 `describeSongRange(File, int)` 帮助方法包在 `if MARKER not in service` 内。若服务源码已含 V2 marker、但帮助方法缺失，脚本跳过整个修改块，却仍无条件要求该方法存在，不能自我修复。
 - 已在脚本末尾校验前加入独立的幂等修复：只在帮助方法缺失时，插入 `describeSongRange` 到曲目选择方法前；保留既有 marker 和其他已应用改动。修复提交：`e95177e1c1dc54794a772e3dacebb6f17b12d5b7`。
 - 下一步必须核查修复提交触发的 Actions Run；仅当 APK build、JVM tests、upload APK 和 source ZIP 相关步骤均成功，且 artifact API 返回 APK 文件时，才把 APK 交给用户。不要将此修复提交视为构建成功。
+
+
+## 41. 2026-10-21 V1.9.9：APK 已成功构建并提取，记录完整 CI 结果
+
+- 修复 V2 部分应用标记后，Run #181 <https://github.com/tryq123333/-/actions/runs/39506661849> 已成功通过 V19 补丁、`Build debug APK` 与 `Run JVM tests`；APK 上传成功，源码 ZIP 上传成功。APK artifact ID `12303257329`（名称 `LuokeAutoPiano-debug-apk`，GitHub artifact ZIP 108,007 bytes）；源码 ZIP artifact ID `12302549972`（111,757 bytes）。
+- 从 APK artifact 提取的安装文件 `LuokeAutoPiano_1.9.9.apk` 为 112,870 bytes，APK/ZIP 完整性检查通过，SHA-256 `0277089cf17b94c9917af0e972f64fccad3efa75b19573b03485c5726763fac1`。已交付用户。
+- Run #181 的最终作业标记为 failure，但不是 APK 编译或测试失败：最后的“Sync optimized source archive back to repository”执行 `git push origin HEAD:main` 时被远程拒绝，日志提示 remote contains work not present locally（fetch first）。这是构建运行期间主分支又有 HANDOFF 日志提交导致的非快进推送冲突；APK 和 source ZIP artifacts 已在此步骤之前生成并上传。
+- 为让下一次干净重建完成整个作业，更新 workflow 同步步骤：先 fetch 最新 `origin/main`，再 rebase 当前生成的源码归档提交，最后 push。更新后触发新构建；构建期间不要额外向 main 写入提交。下一步确认完整 Run 的 conclusion 为 success，且 APK artifact 存在。
