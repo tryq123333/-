@@ -408,3 +408,9 @@
 - 新增 `AbLoopRepeatPolicy.java` 与 `AbLoopRepeatPolicyTest.java`，单元测试覆盖只有 A/B 与重复播放同时开启才循环、重复关闭时单次结束、A/B 关闭时不循环。版本号目标为 `1.9.9` / `versionCode 28`。
 - 本地使用当前可下载的 V1.9.7 源码归档做了静态补丁演练：脚本连续应用两次仍通过，11 项后置条件检查全部通过，证明脚本在该基线下幂等。完整 Gradle 测试无法在当前容器启动，因为 Gradle Wrapper 下载 `https://services.gradle.org/distributions/gradle-8.14.3-bin.zip` 时遇到网络 `UnknownHostException`。
 - 已把 V19 脚本和工作流接线推送到 main：脚本提交 `45e4fab1e7f01a5879956af60237fce3f7cdc1c0`；工作流提交 `2c0d4c13e6e37d1036bd5f431b64362a3110af72`。截至此条日志更新时，尚未从可用的检查接口确认该次 GitHub Actions 的最终 APK/JVM 测试状态，也未确认 V19 源码 ZIP 已由工作流同步回 main。因此**不要把构建或手机真机验证描述为已通过**；后续首先检查该提交触发的 Actions 结果，再确认 APK 和源码 ZIP 产物。
+
+## 39. 2026-10-21 V1.9.9：用户要求先确认编译成功再提供下载地址
+
+- 根据用户要求，需验证第 38 节 V19 补丁后的 APK 构建结果；此前的本地 Gradle 构建因下载 Gradle 时网络 DNS 失败，不能作为编译成功证据。
+- 为触发主分支自动构建，在本日志中记录本次验证请求。该提交有意不使用 `[skip ci]`，以便 `.github/workflows/build-apk.yml` 的 main push 触发器运行。
+- 交付规则：只有在 GitHub Actions 明确显示构建成功，并且产物列表里确有 APK artifact 后，才告知用户 APK 已编译完成；若失败，应检查作业步骤/日志，修复后重新构建。不可将“提交存在”或“运行已启动”称为构建成功。
