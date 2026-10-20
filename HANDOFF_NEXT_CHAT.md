@@ -430,3 +430,11 @@
 - 从 APK artifact 提取的安装文件 `LuokeAutoPiano_1.9.9.apk` 为 112,870 bytes，APK/ZIP 完整性检查通过，SHA-256 `0277089cf17b94c9917af0e972f64fccad3efa75b19573b03485c5726763fac1`。已交付用户。
 - Run #181 的最终作业标记为 failure，但不是 APK 编译或测试失败：最后的“Sync optimized source archive back to repository”执行 `git push origin HEAD:main` 时被远程拒绝，日志提示 remote contains work not present locally（fetch first）。这是构建运行期间主分支又有 HANDOFF 日志提交导致的非快进推送冲突；APK 和 source ZIP artifacts 已在此步骤之前生成并上传。
 - 为让下一次干净重建完成整个作业，更新 workflow 同步步骤：先 fetch 最新 `origin/main`，再 rebase 当前生成的源码归档提交，最后 push。更新后触发新构建；构建期间不要额外向 main 写入提交。下一步确认完整 Run 的 conclusion 为 success，且 APK artifact 存在。
+
+
+## 42. 2026-10-21 V1.9.9：完整工作流最终成功（Run #182）
+
+- 修复源码同步步骤后，Run #182 <https://github.com/tryq123333/-/actions/runs/39507181271> 最终 `conclusion=success`。
+- 完整通过步骤：V19 自动补丁、Build debug APK、Run JVM tests、Upload APK、Package optimized source archive、Upload optimized source archive，以及 Sync optimized source archive back to repository。
+- 最新 APK artifact ID `12303867148`（`LuokeAutoPiano-debug-apk`）；source ZIP artifact ID `12304022042`。源码回传成功，不再有 Run #181 的非快进 push 冲突。
+- 已重新下载并提取 Run #182 APK 到交付文件 `/mnt/data/LuokeAutoPiano_1.9.9.apk`，大小 112,870 bytes；ZIP 完整性检查通过，SHA-256 `f38d5b482420176bb788ee3cf7f66a5163414e371ca996eb25dac8f57ead4e8e`。版本目标为 V1.9.9 / versionCode 28。手机真机交互验证仍需用户安装后反馈；CI/JVM 成功不等于真机测试。
