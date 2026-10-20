@@ -767,6 +767,35 @@ if MARKER not in service:
         "NOTE_ROLL_PLAY_REWIND_SEEK_GUARD_V1 SONG_SPECIFIC_ROLL_UI_V2 */", 1)
     SERVICE.write_text(service, encoding="utf-8")
 
+# Repair an interrupted/older V2 application where the marker exists but the helper was never saved.
+service = SERVICE.read_text(encoding="utf-8")
+if "private String describeSongRange(File file, int transpose)" not in service:
+    describe_method_fallback = """    private String describeSongRange(File file, int transpose) {
+        String shift = (transpose > 0 ? "+" : "") + transpose;
+        try {
+            MidiParser.MidiSong song = MidiParser.parse(file);
+            List<String> missing = InstrumentLayout.missingNotes(song, transpose, prefs);
+            if (missing.isEmpty()) return "移调 " + shift + " 半音 · 音域检查通过";
+            StringBuilder text = new StringBuilder("移调 ").append(shift).append(" 半音 · 超出音域 ")
+                    .append(missing.size()).append(" 种：");
+            for (int i = 0; i < Math.min(4, missing.size()); i++) {
+                if (i > 0) text.append("、");
+                text.append(missing.get(i));
+            }
+            if (missing.size() > 4) text.append("…");
+            return text.toString();
+        } catch (Exception ex) {
+            return "移调 " + shift + " 半音 · 曲谱读取失败";
+        }
+    }
+
+"""
+    picker_anchor = "    private void selectImportedSong(String path, String displayName) {"
+    if picker_anchor not in service:
+        raise SystemExit("Cannot repair missing per-song pitch range summary: song selection anchor not found.")
+    service = service.replace(picker_anchor, describe_method_fallback + picker_anchor, 1)
+    SERVICE.write_text(service, encoding="utf-8")
+
 # Keep marker visible in all patched Java sources and validate key postconditions.
 note = NOTE.read_text(encoding="utf-8")
 service = SERVICE.read_text(encoding="utf-8")
